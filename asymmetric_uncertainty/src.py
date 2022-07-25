@@ -317,10 +317,10 @@ class AsymmetricUncertainty:
         return all(np.isfinite(self.items()))
     
     def isna(self):
-        return pd.isna(self.value)
+        return (np.isnan(self.value) or (self.value is None))
     
     def notna(self):
-        return pd.notna(self.value)
+        return ~(np.isnan(self.value) or (self.value is None))
 
 class UncertaintyArray(list):
     
