@@ -7,7 +7,7 @@ def pos_errors(array):
 def neg_errors(array):
     return [v.minus for v in array]
 
-class AsymmetricUncertainty:
+class a_u:
     """
     Class for handling propagation of asymmetric uncertainties assuming a pseudo-Gaussian probability distribution
     where the plus and minus errors in each direction of the nominal value are like modified 1-sigma standard devations.
@@ -119,7 +119,7 @@ class AsymmetricUncertainty:
             self.plus = new_pos
             self.minus = new_neg
         else:
-            return AsymmetricUncertainty(self.value,new_pos,new_neg)
+            return a_u(self.value,new_pos,new_neg)
     
     def items(self):
         return (self.value,self.plus,self.minus)
@@ -131,132 +131,132 @@ class AsymmetricUncertainty:
         return float(self.value)
     
     def __neg__(self):
-        return AsymmetricUncertainty(-self.value,self.minus,self.plus)
+        return a_u(-self.value,self.minus,self.plus)
         
     def __add__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         result = self.value + other.value
         pos = np.sqrt(self.plus**2 + other.plus**2)
         neg = np.sqrt(self.minus**2 + other.minus**2)
-        #print("added",self,"+",other,"=",AsymmetricUncertainty(result,pos,neg))
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("added",self,"+",other,"=",a_u(result,pos,neg))
+        return a_u(result,pos,neg)
     
     def __radd__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         result = self.value + other.value
         pos = np.sqrt(self.plus**2 + other.plus**2)
         neg = np.sqrt(self.minus**2 + other.minus**2)
-        #print("added",other,"+",self,"=",AsymmetricUncertainty(result,pos,neg))
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("added",other,"+",self,"=",a_u(result,pos,neg))
+        return a_u(result,pos,neg)
     
     def __sub__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         result = self.value - other.value
         pos = np.sqrt(self.plus**2 + other.minus**2)
         neg = np.sqrt(self.minus**2 + other.plus**2)
-        #print("subtracted",other,"from",self,"=",AsymmetricUncertainty(result,pos,neg))
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("subtracted",other,"from",self,"=",a_u(result,pos,neg))
+        return a_u(result,pos,neg)
     
     def __rsub__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         result = other.value - self.value
         pos = np.sqrt(self.minus**2 + other.plus**2)
         neg = np.sqrt(self.plus**2 + other.minus**2)
-        #print("subtracted",self,"from",other,"=",AsymmetricUncertainty(result,pos,neg))
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("subtracted",self,"from",other,"=",a_u(result,pos,neg))
+        return a_u(result,pos,neg)
     
     def __mul__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         
         result = self.value * other.value
         pos = np.sqrt((self.plus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
         neg = np.sqrt((self.minus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
-        #print("multiplied",self,"by",other,"=",AsymmetricUncertainty(result,pos,neg))
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("multiplied",self,"by",other,"=",a_u(result,pos,neg))
+        return a_u(result,pos,neg)
     
     def __rmul__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         
         result = self.value * other.value
         pos = np.sqrt((self.plus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
         neg = np.sqrt((self.minus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
-        #print("multiplied",other,"by",self,"=",AsymmetricUncertainty(result,pos,neg))        
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("multiplied",other,"by",self,"=",a_u(result,pos,neg))        
+        return a_u(result,pos,neg)
     
     def __truediv__(self,other): # self divided by something
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         result = self.value / other.value
         pos = np.sqrt((self.plus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
         neg = np.sqrt((self.minus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
-        #print("divided",self,"by",other,"=",AsymmetricUncertainty(result,pos,neg))        
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("divided",self,"by",other,"=",a_u(result,pos,neg))        
+        return a_u(result,pos,neg)
     
     def __rtruediv__(self,other): # something divided by self
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         result = other.value / self.value
         pos = np.sqrt((other.plus/other.value)**2 + (self.minus/self.value)**2) * np.abs(result)
         neg = np.sqrt((other.minus/other.value)**2 + (self.plus/self.value)**2) * np.abs(result)
-        #print("divided",other,"by",self,"=",AsymmetricUncertainty(result,pos,neg))        
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("divided",other,"by",self,"=",a_u(result,pos,neg))        
+        return a_u(result,pos,neg)
     
     def __pow__(self,other): # self to the something power
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         result = self.value**other.value
         pos = np.abs(result)*np.sqrt((self.plus*other.value/self.value)**2 + (other.plus*np.log(self.value))**2)
         neg = np.abs(result)*np.sqrt((self.minus*other.value/self.value)**2 + (other.minus*np.log(self.value))**2)
-        #print("raised",self,"to",other,"=",AsymmetricUncertainty(result,pos,neg))        
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("raised",self,"to",other,"=",a_u(result,pos,neg))        
+        return a_u(result,pos,neg)
     
     def __rpow__(self,other): # something to the self power
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         result = other.value**self.value
         pos = np.abs(result)*np.sqrt((other.plus*self.value/other.value)**2 + (self.plus*np.log(other.value))**2)
         neg = np.abs(result)*np.sqrt((other.minus*self.value/other.value)**2 + (self.minus*np.log(other.value))**2)
-        #print("raised",other,"to",self,"=",AsymmetricUncertainty(result,pos,neg))                
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("raised",other,"to",self,"=",a_u(result,pos,neg))                
+        return a_u(result,pos,neg)
     
     def log10(self):
         result = np.log10(self.value)
         pos = self.plus/(self.value*np.log(10))
         neg = self.minus/(self.value*np.log(10))
-        #print("logged",self,"=",AsymmetricUncertainty(result,pos,neg))
-        return AsymmetricUncertainty(result,pos,neg)
+        #print("logged",self,"=",a_u(result,pos,neg))
+        return a_u(result,pos,neg)
     
     def log(self):
         result = np.log(self.value)
         pos = self.plus/self.value
         neg = self.minus/self.value
-        return AsymmetricUncertainty(result,pos,neg)
+        return a_u(result,pos,neg)
     
     def sqrt(self):
         return self**0.5
@@ -265,49 +265,49 @@ class AsymmetricUncertainty:
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         return self.value == other.value and self.plus == other.plus and self.minus == other.minus
     
     def __gt__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         return self.value > other.value
     
     def __lt__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         return self.value < other.value
     
     def __lshift__(self,other): # overloaded <<; definitively less than
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         return self.maximum < other.minimum
     
     def __rshift__(self,other): # overloaded >>; definitively greater than
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         return self.minimum > other.maximum
     
     def __le__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         return self.value <= other.value
     
     def __ge__(self,other):
         if isinstance(other,type(self)):
             pass
         else:
-            other = AsymmetricUncertainty(other,0,0)
+            other = a_u(other,0,0)
         return self.value >= other.value
     
     def conjugate(self):
@@ -316,11 +316,13 @@ class AsymmetricUncertainty:
     def __isfinite__(self):
         return all(np.isfinite(self.items()))
     
-    def isna(self):
+    def isna(self): # pandas-style NaN checker
         return (np.isnan(self.value) or (self.value is None))
     
-    def notna(self):
+    def notna(self): # opposite of above
         return ~(np.isnan(self.value) or (self.value is None))
+
+AsymmetricUncertainty = a_u # alias for legacy namespace support
 
 class UncertaintyArray(list):
     
@@ -331,7 +333,7 @@ class UncertaintyArray(list):
                 self[i].plus
                 self[i].minus
             except AttributeError:
-                self[i] = AsymmetricUncertainty(self[i],0,0)
+                self[i] = a_u(self[i],0,0)
                 
         self.as_numpy = np.array(self.as_list)
         self.flattened = self.as_numpy.flatten()
