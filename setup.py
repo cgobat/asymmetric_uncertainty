@@ -8,7 +8,7 @@ with open("./LICENSE","r") as f:
 
 if __name__ == '__main__':
     setup(name="asymmetric_uncertainty",
-          version="0.1.0",
+          version="0.2.0",
           author="Caden Gobat",
           author_email="<cgobat@gwu.edu>",
           url="https://github.com/cgobat/asymmetric_uncertainty",
