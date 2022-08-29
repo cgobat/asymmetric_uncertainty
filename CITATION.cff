@@ -1,0 +1,42 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Asymmetric Uncertainty
+message: >-
+  If you use this software, please cite it by referencing
+  its ASCL identifier and/or ADS bibcode.
+type: software
+authors:
+  - given-names: Caden
+    family-names: Gobat
+    email: cgobat@gwu.edu
+    affiliation: >-
+      George Washington University, Southwest
+      Research Institute
+    orcid: 'https://orcid.org/0000-0003-1268-8845'
+identifiers:
+  - type: ASCL
+    value: 'ascl:2208.005'
+    description: Astrophysics Source Code Library
+  - type: ADS
+    value: 2022ascl.soft08005G
+    description: SAO/NASA Astrophysics Data System
+repository-code: 'https://github.com/cgobat/asymmetric_uncertainty'
+repository: 'http://ascl.net/2208.005'
+abstract: >-
+  Asymmetric Uncertainty implements and provides an
+  object class for dealing with uncertainties for
+  physical quantities that are not symmetric.
+  Instances of the class behave appropriately with
+  other numeric objects under most mathematical
+  operations, and the associated errors propagate
+  accordingly. The class also provides utilities such
+  as methods for evaluating and plotting probability
+  density functions, as well as capabilities for
+  handling arrays of such objects. Standard and
+  symmetric uncertainties are also supported.
+keywords:
+  - error propagation
+  - uncertainty analysis
+license: GPL-3.0
