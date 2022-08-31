@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from asymmetric_uncertainty.core import __author__, __contact__, __version__
+from asymmetric_uncertainty import __author__, __contact__, __version__
 
 with open("./README.md","r") as f:
     readme = f.read()
