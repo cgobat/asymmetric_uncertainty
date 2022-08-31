@@ -1,43 +1,37 @@
+"""A package for handling numeric quantities with asymmetric uncertainties."""
+
+__author__ = "Caden Gobat"
+__contact__ = "<cgobat@gwu.edu>"
+__author_affiliation__ = ["George Washington University", "Southwest Research Institute"]
+__deprecated__ = False
+__version__ = "0.2.0"
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-def pos_errors(array):
-    return [v.plus for v in array]
-
-def neg_errors(array):
-    return [v.minus for v in array]
-
 class a_u:
     """
-    Class for handling propagation of asymmetric uncertainties assuming a pseudo-Gaussian probability distribution
-    where the plus and minus errors in each direction of the nominal value are like modified 1-sigma standard devations.
-    See 2008ApJ...672..433S for more.
-    
-    Author: Caden Gobat, George Washington University
+    Class for representing and handling propagation of asymmetric uncertainties assuming a pseudo-Gaussian
+    probability distribution where the plus and minus errors in each direction of the nominal value are like
+    modified 1-sigma standard deviations.
 
     Parameters
     ----------
-    nominal : numeric
+    numeric : nominal
         the nominal value of the represented quantity
-    pos_err : numeric
-        the plus error on the value, as in value = nominal (+pos_err, -neg_err)
-    neg_err : numeric
-        the minus error on the value, as in value = nominal (+pos_err, -neg_err)
+    numeric : pos_err
+        the plus error on the value
+    numeric : neg_err
+        the minus error on the value
 
-    Methods
-    -------
-    pdf()
-        plots the probability distribution function
-    
-    cdf()
-        plots the cumulative distribution function
-
-    Raises
-    ------
-    ValueError
-        if you don't pass compatible values for the arguments
-    TypeError
-        if you don't pass values of the correct format for the arguments
+    Attributes
+    ----------
+    numeric : value
+        the nominal value of the represented quantity
+    numeric : plus
+        the positive error on the value
+    numeric : plus
+        the negative error on the value
     """
     
     def __init__(self, nominal, pos_err=0, neg_err=0):
@@ -52,7 +46,7 @@ class a_u:
                 self.plus = float(err_str.split(",")[0][1:])
                 self.minus = float(err_str.split(",")[1][1:])
             else:
-                raise TypeError("Failed to parse string, likely due to improper formatting.")
+                raise ValueError("Failed to parse string, likely due to improper formatting.")
         else:
             self.value = float(nominal)
             self.plus = np.abs(float(pos_err))
@@ -75,14 +69,24 @@ class a_u:
             return "$%f_{-%f}^{+%f}$" %(self.value,self.minus,self.plus)
         
     def pdf(self,x):
+        """
+        Computes and returns the values of the probability distribution function for the specified input.
+        """
         return np.piecewise(x, [x<self.value, x>=self.value],
                             [lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
                              lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
     
     def cdf(self,x):
+        """
+        Computes and returns the values of the cumulative distribution function for the specified input.
+        """
         return np.cumsum(self.pdf(x))/np.sum(self.pdf(x))
         
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
+        """
+        Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
+        `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
+        """
         neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
         pos_x = np.linspace(self.value,self.value+(num_sigma*self.minus),discretization)
         p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
@@ -93,6 +97,10 @@ class a_u:
         plt.show()
         
     def cdfplot(self,num_sigma=5,discretization=100,**kwargs):
+        """
+        Plots the associated CDF over the specified number of sigma, using 2*`discretization` points.
+        `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
+        """
         neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
         pos_x = np.linspace(self.value,self.value+(num_sigma*self.minus),discretization)
         p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
@@ -104,6 +112,10 @@ class a_u:
         plt.show()
         
     def add_error(self, delta, method="quadrature", inplace=False):
+        """
+        Adds `delta` to an instance's existing error. Possible `method`s are `quadrature`, `straight`, or `split`.
+        If `inplace` is `True`, the existing object's errors are modified in place. If it is `False`, a new instance is returned.
+        """
         if method=="quadrature":
             new_pos = np.sqrt(self.plus**2 + delta**2)
             new_neg = np.sqrt(self.minus**2 + delta**2)
@@ -122,6 +134,9 @@ class a_u:
             return a_u(self.value,new_pos,new_neg)
     
     def items(self):
+        """
+        Returns a tuple of `(value,plus,minus)`.
+        """
         return (self.value,self.plus,self.minus)
     
     def __int__(self):
@@ -316,16 +331,25 @@ class a_u:
     def __isfinite__(self):
         return all(np.isfinite(self.items()))
     
-    def isna(self): # pandas-style NaN checker
+    def isna(self):
+        """
+        `pandas`-style NaN checker. Returns True if value is NaN or None, and False if neither.        
+        """
         return (np.isnan(self.value) or (self.value is None))
     
-    def notna(self): # opposite of above
+    def notna(self):
+        """
+        Inverse of `isna()`. Returns True if value is neither NaN nor None, and False if it is.
+        """
         return ~(np.isnan(self.value) or (self.value is None))
 
 AsymmetricUncertainty = a_u # alias for legacy namespace support
 
 class UncertaintyArray(list):
-    
+    """
+    Class for representing an array of `a_u` objects.
+    Mostly provides utilities for slicing and accessing various attributes.
+    """
     def refresh(self):
         for i in range(len(self)):
             try:
@@ -376,3 +400,17 @@ class UncertaintyArray(list):
     
     def pdf(self,x):
         return np.sum([entry.pdf(x) for entry in self], axis=0)
+
+def pos_errors(array):
+    """
+    Stand-alone function to return an array of the positive errors of an array of `a_u` objects.
+    Functional equivalent to `UncertaintyArray(array).plus`.
+    """
+    return [v.plus for v in array]
+
+def neg_errors(array):
+    """
+    Stand-alone function to return an array of the negative errors of an array of `a_u` objects.
+    Functional equivalent to `UncertaintyArray(array).minus`.
+    """
+    return [v.minus for v in array]
