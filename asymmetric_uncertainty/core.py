@@ -1,8 +1,8 @@
-"""A package for handling numeric quantities with asymmetric uncertainties."""
+"""Asymmetric Uncertainty: A package for handling non-standard numerical uncertainties."""
 
 __author__ = "Caden Gobat"
-__contact__ = "<cgobat@gwu.edu>"
 __author_affiliation__ = ["George Washington University", "Southwest Research Institute"]
+__contact__ = "<cgobat@gwu.edu>"
 __deprecated__ = False
 __version__ = "0.2.0"
 
@@ -272,7 +272,10 @@ class a_u:
         pos = self.plus/self.value
         neg = self.minus/self.value
         return a_u(result,pos,neg)
-    
+
+    def exp(self):
+        return np.exp(1)**self
+
     def sqrt(self):
         return self**0.5
     
