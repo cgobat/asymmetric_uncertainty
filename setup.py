@@ -17,4 +17,4 @@ if __name__ == '__main__':
           description="A package that implements a class to represent numeric quantities with asymmetric uncertainties.",
           long_description=readme,
           license=license,
-          install_requires=["numpy","matplotlib"])
+          install_requires=["numpy","matplotlib","astropy"])

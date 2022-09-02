@@ -8,8 +8,9 @@ __version__ = "0.2.0"
 
 import numpy as np
 import matplotlib.pyplot as plt
+from astropy.units import Quantity
 
-class a_u:
+class a_u(Quantity):
     """
     Class for representing and handling propagation of asymmetric uncertainties assuming a pseudo-Gaussian
     probability distribution where the plus and minus errors in each direction of the nominal value are like
@@ -34,23 +35,15 @@ class a_u:
         the negative error on the value
     """
     
+    def __new__(cls, *args, **kwargs):
+        obj = super().__new__(cls, value=args[0], unit=None)
+        obj.__init__(*args)
+        return obj
+
     def __init__(self, nominal, pos_err=0, neg_err=0):
-        if isinstance(nominal,str):
-            stripped = nominal.replace(" ","")
-            if "±" in stripped:
-                self.value = float(stripped.split("±")[0])
-                self.plus = self.minus = float(nominal.split("±")[1])
-            elif "+" in stripped and "-" in stripped:
-                self.value = float(stripped.split("(")[0])
-                err_str = stripped.split("(")[1].replace(")","")
-                self.plus = float(err_str.split(",")[0][1:])
-                self.minus = float(err_str.split(",")[1][1:])
-            else:
-                raise ValueError("Failed to parse string, likely due to improper formatting.")
-        else:
-            self.value = float(nominal)
-            self.plus = np.abs(float(pos_err))
-            self.minus = np.abs(float(neg_err))
+      # self.value is initialized by astropy.units.Quantity
+        self.plus = np.abs(float(pos_err))
+        self.minus = np.abs(float(neg_err))
         self.maximum = self.value+self.plus
         self.minimum = self.value-self.minus
         self.sign = 1 if self.value >= 0 else -1
