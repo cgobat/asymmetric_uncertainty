@@ -8,6 +8,7 @@ __version__ = "0.2.1"
 
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 class a_u:
     """
@@ -346,7 +347,11 @@ class a_u:
         """
         return not (np.isnan(self.value) or (self.value is None))
 
-AsymmetricUncertainty = a_u # alias for legacy namespace support
+class AsymmetricUncertainty(a_u): # alias for legacy namespace support
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        warnings.warn("class AsymmetricUncertainty has been renamed. Use a_u instead.",
+                      DeprecationWarning, stacklevel=2)
 
 class UncertaintyArray(list):
     """
