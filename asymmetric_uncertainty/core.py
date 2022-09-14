@@ -337,7 +337,7 @@ class a_u(Quantity):
         """
         Inverse of `isna()`. Returns True if value is neither NaN nor None, and False if it is.
         """
-        return ~(np.isnan(self.value) or (self.value is None))
+        return not (np.isnan(self.value) or (self.value is None))
 
 AsymmetricUncertainty = a_u # alias for legacy namespace support
 
