@@ -8,9 +8,9 @@ __version__ = "0.2.1"
 
 import numpy as np
 import matplotlib.pyplot as plt
-from astropy.units import Quantity
+import astropy.units as u
 
-class a_u(Quantity):
+class a_u(u.Quantity):
     """
     Class for representing and handling propagation of asymmetric uncertainties assuming a pseudo-Gaussian
     probability distribution where the plus and minus errors in each direction of the nominal value are like
@@ -36,12 +36,16 @@ class a_u(Quantity):
     """
     
     def __new__(cls, *args, **kwargs):
-        obj = super().__new__(cls, value=args[0], unit=None)
+        # get the value of the 'unit' argument if it exists, or default to dimensionless
+        astropy_unit = kwargs.pop("unit", u.dimensionless_unscaled)
+
+        obj = super().__new__(cls, value=args[0], unit=astropy_unit)
         obj.__init__(*args)
+
         return obj
 
-    def __init__(self, nominal, pos_err=0, neg_err=0):
-      # self.value is initialized by astropy.units.Quantity
+    def __init__(self, nominal, pos_err=0, neg_err=0, **kwargs):
+      # self.value is initialized in self.__new__ by astropy.units.Quantity
         self.plus = np.abs(float(pos_err))
         self.minus = np.abs(float(neg_err))
         self.maximum = self.value+self.plus
@@ -66,8 +70,10 @@ class a_u(Quantity):
         Computes and returns the values of the probability distribution function for the specified input.
         """
         return np.piecewise(x, [x<self.value, x>=self.value],
-                            [lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
-                             lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
+                            [lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * \
+                                        np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
+                             lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * \
+                                        np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
     
     def cdf(self,x):
         """
@@ -82,9 +88,11 @@ class a_u(Quantity):
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
         pos_x = np.linspace(self.value,self.value+(num_sigma*self.minus),discretization)
-        p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
-        p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
-        x = np.array(list(neg_x)+list(pos_x))
+        p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * \
+                np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
+        p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * \
+                np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
+        x = np.hstack([neg_x, pos_x])
         pdf = self.pdf(x)
         plt.plot(x,pdf,**kwargs)
         plt.show()
@@ -96,9 +104,11 @@ class a_u(Quantity):
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
         pos_x = np.linspace(self.value,self.value+(num_sigma*self.minus),discretization)
-        p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
-        p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
-        x = np.array(list(neg_x)+list(pos_x))
+        p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * \
+                np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
+        p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * \
+                np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
+        x = np.hstack([neg_x, pos_x])
         pdf = self.pdf(x)
         cdf = np.cumsum(pdf)/np.sum(pdf)
         plt.plot(x,cdf,**kwargs)
