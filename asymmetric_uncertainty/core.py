@@ -36,30 +36,53 @@ class a_u(u.Quantity):
     numeric : plus
         the negative error on the value
     """
+    value: Number
+    plus : Number
+    minus: Number
+    unit : u.Unit
     
-    def __new__(cls, nominal: Number, pos_err: Number=0., neg_err: Number=0., unit: "str|u.Unit"=None):
-        # get the value of the 'unit' argument if it exists, or default to dimensionless
+    def __new__(cls, nominal: "Number|u.Quantity", pos_err: "Number|u.Quantity"=0.,
+                neg_err: "Number|u.Quantity"=0., unit: "str|u.Unit"=u.dimensionless_unscaled) -> "a_u":
+        
+        for check_val in (nominal, pos_err, neg_err):
+            if isinstance(check_val, u.Quantity):
+                assert check_val.isscalar, "Input values must be scalars, not arrays."
+        
+        if unit == u.dimensionless_unscaled: # unit unspecified
+            for check_val in (nominal, pos_err, neg_err):
+                if hasattr(check_val, "unit"): # input already has units?
+                    unit = check_val.unit
+                    break
+                else: # if it doesn't, move on
+                    pass
+        else: # unit is specified outright,
+            pass # so just use that
+        
+        if hasattr(nominal, "unit"):
+            nominal = nominal.to(unit).value
+        if hasattr(pos_err, "unit"):
+            pos_err = pos_err.to(unit).value
+        if hasattr(neg_err, "unit"):
+            neg_err = neg_err.to(unit).value
+        
         obj = super().__new__(cls, value=nominal, unit=unit)
-        obj.__init_err__(pos_err, neg_err)
+        # astropy Quantity initializes self.value and self.unit
+        obj._init_err(pos_err, neg_err)
         return obj
     
-    def __init_err__(self, pos_err: Number, neg_err: Number):
-      # self.value is initialized in self.__new__ by astropy.units.Quantity
+    def _init_err(self, pos_err: Number, neg_err: Number) -> None:
         self.plus = abs(float(pos_err))
         self.minus = abs(float(neg_err))
-        self.maximum = self.value+self.plus
-        self.minimum = self.value-self.minus
         self.sign = 1 if self.value >= 0 else -1
-        self.is_symmetric = np.isclose(self.plus, self.minus)
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         if np.isclose(self.plus, self.minus):
             str_repr = f"{self.value} ± {self.plus}{self._unitstr}"
         else:
             str_repr = f"{self.value} (+{self.plus}, -{self.minus}){self._unitstr}"
         return str_repr
     
-    def _repr_latex_(self):
+    def _repr_latex_(self) -> str:
         if np.isclose(self.plus, self.minus):
             str_repr = f"${self.value} \pm {self.plus}$"
         else:
@@ -68,23 +91,41 @@ class a_u(u.Quantity):
             str_repr += " " + self.unit._repr_latex_()
         return str_repr
 
-    def __format__(self, format_spec):
+    def __format__(self, format_spec) -> str:
         try:
             val = format(self.value, format_spec)
             pos = format(self.plus, format_spec)
             neg = format(self.minus, format_spec)
+            sym_flag = (pos == neg)
             overall_fmt = "s"
         except ValueError:
             val = self.value
             pos = self.plus
             neg = self.minus
+            sym_flag = self.is_symmetric
             overall_fmt = format_spec
-        if pos == neg:
+        if sym_flag:
             return format(f"{val} ± {pos}{self._unitstr}", overall_fmt)
         else:
             return format(f"{val} (+{pos}, -{neg}){self._unitstr}", overall_fmt)
-        
-    def pdf(self, x):
+
+    @property
+    def maximum(self) -> Number:
+        return (self.value + self.plus)*self.unit
+    
+    @property
+    def minimum(self) -> u.Quantity:
+        return (self.value - self.minus)*self.unit
+    
+    @property
+    def as_quantity(self) -> u.Quantity:
+        return self.value * self.unit
+
+    @property
+    def is_symmetric(self) -> bool:
+        return np.isclose(self.plus, self.minus)
+    
+    def pdf(self, x) -> np.ndarray:
         """
         Computes and returns the values of the probability distribution function for the specified input.
         """
@@ -94,13 +135,13 @@ class a_u(u.Quantity):
                              lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * \
                                         np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
     
-    def cdf(self, x):
+    def cdf(self, x) -> np.ndarray:
         """
         Computes and returns the values of the cumulative distribution function for the specified input.
         """
         return np.cumsum(self.pdf(x))/np.sum(self.pdf(x))
-        
-    def pdfplot(self, num_sigma=5, discretization=100, **kwargs):
+    
+    def pdfplot(self, num_sigma=5, discretization=100, **kwargs) -> None:
         """
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
@@ -110,9 +151,9 @@ class a_u(u.Quantity):
         x = np.hstack([neg_x, pos_x])
         pdf = self.pdf(x)
         plt.plot(x, pdf, **kwargs)
-        plt.show()
-        
-    def cdfplot(self, num_sigma=5, discretization=100, **kwargs):
+        return None
+    
+    def cdfplot(self, num_sigma=5, discretization=100, **kwargs) -> None:
         """
         Plots the associated CDF over the specified number of sigma, using 2*`discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
@@ -123,141 +164,128 @@ class a_u(u.Quantity):
         pdf = self.pdf(x)
         cdf = np.cumsum(pdf)/np.sum(pdf)
         plt.plot(x, cdf, **kwargs)
-        plt.show()
-        
-    def add_error(self, delta, method="quadrature", inplace=False):
+        return None
+    
+    def add_error(self, delta, how="quadrature", inplace=False):
         """
         Adds `delta` to an instance's existing error. Possible `method`s are `quadrature`, `straight`, or `split`.
         If `inplace` is `True`, the existing object's errors are modified in place. If it is `False`, a new instance is returned.
         """
-        if method=="quadrature":
+        if how=="quadrature":
             new_pos = np.sqrt(self.plus**2 + delta**2)
             new_neg = np.sqrt(self.minus**2 + delta**2)
-        elif method=="straight":
+        elif how=="straight":
             new_pos = self.plus + delta
             new_neg = self.minus + delta
-        elif method=="split":
+        elif how=="split":
             new_pos = self.plus + delta/2
             new_neg = self.minus + delta/2
         else:
-            raise ValueError
+            raise ValueError(f"'how' should be one of {{'quadrature', 'straight', 'split'}}")
         if inplace:
             self.plus = new_pos
             self.minus = new_neg
         else:
-            return a_u(self.value, new_pos, new_neg)
+            return a_u(self.value, new_pos, new_neg, unit=self.unit)
     
-    def items(self):
+    def items(self) -> tuple:
         """
         Returns a tuple of `(value, plus, minus)`.
         """
         return (self.value, self.plus, self.minus)
     
-    def __int__(self):
-        return int(self.value)
+    def __int__(self) -> int:
+        return int(self.as_quantity)
     
-    def __float__(self):
-        return float(self.value)
+    def __float__(self) -> float:
+        return float(self.as_quantity)
     
     def __neg__(self):
-        return a_u(-self.value, self.minus, self.plus)
-        
-    def __add__(self, other):
+        return a_u(-self.value, self.minus, self.plus, self.unit)
+    
+    def __add__(self, other): # self + other
         if isinstance(other, type(self)):
-            result = (self.value*self.unit) + (other.value*other.unit)
+            result = self.as_quantity + other.as_quantity
             pos = np.sqrt(self.plus**2 + other.plus**2)
             neg = np.sqrt(self.minus**2 + other.minus**2)
             #print("added", self, "+", other, "=", a_u(result, pos, neg))
             return a_u(result, pos, neg, unit=result.unit)
         elif isinstance(other, u.Quantity):
-            result = (self.value * self.unit) + other
+            result = self.as_quantity + other
             pos = (self.plus*self.unit).to(result.unit)
             neg = (self.minus*self.unit).to(result.unit)
             return a_u(result.value, pos.value, neg.value, result.unit)
         elif isinstance(other, Number):
-            return a_u(self.value+other, self.plus, self.minus, self.unit)
+            result = self.as_quantity + other
+            return a_u(result.value, self.plus, self.minus, result.unit)
         else:
             return NotImplemented
     
-    def __radd__(self, other):
-        return self + other
+    def __radd__(self, other): # other + self
+        return self + other # addition is commutative
     
-    def __sub__(self, other):
+    def __sub__(self, other): # self - other
         if isinstance(other, type(self)):
-            result = self.value - other.value
-            pos = np.sqrt(self.plus**2 + other.minus**2)
-            neg = np.sqrt(self.minus**2 + other.plus**2)
+            result = self.as_quantity - other.as_quantity
+            pos = np.sqrt((self.plus*self.unit)**2 + (other.minus*other.unit)**2)
+            neg = np.sqrt((self.minus*self.unit)**2 + (other.plus*other.unit)**2)
             #print("subtracted", other, "from", self, "=", a_u(result, pos, neg))
-            return a_u(result, pos, neg)
-        elif isinstance(other, u.Quantity):
-            result = (self.value * self.unit) - other
+            return a_u(result.value, pos.value, neg.value, unit=result.unit)
+        elif isinstance(other, (u.Quantity, Number)):
+            result = self.as_quantity - other
             pos = (self.plus*self.unit).to(result.unit)
             neg = (self.minus*self.unit).to(result.unit)
-            return a_u(result.value, pos.value, neg.value, result.unit)
-        elif isinstance(other, Number):
-            return a_u(self.value-other, self.plus, self.minus, self.unit)
+            return a_u(result.value, pos.value, neg.value, unit=result.unit)
         else:
             return NotImplemented
     
-    def __rsub__(self, other):
-        return -(self-other)
+    def __rsub__(self, other): # other - self
+        return -(self - other) # leverage existing __sub__() and __neg__() implementations
     
-    def __mul__(self, other):
+    def __mul__(self, other): # self * other
         if isinstance(other, type(self)):
-            result = self.value * other.value
+            result = self.as_quantity * other.as_quantity
             pos = np.sqrt((self.plus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
             neg = np.sqrt((self.minus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
-            return a_u(result, pos, neg, unit=self.unit*other.unit)
-        elif isinstance(other, u.Quantity):
-            result = u.Quantity(self.value, self.unit) * other
+            return a_u(result.value, pos, neg, unit=result.unit)
+        elif isinstance(other, (u.Quantity, Number)):
+            result = self.as_quantity * other
             pos = (self.plus/self.value) * np.abs(result)
             neg = (self.minus/self.value) * np.abs(result)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
-        elif isinstance(other, Number):
-            result = self.value*other
-            pos = (self.plus/self.value) * np.abs(result)
-            neg = (self.minus/self.value) * np.abs(result)
-            return a_u(result, pos, neg, unit=self.unit)
         elif isinstance(other, u.UnitBase):
             return a_u(self.value, self.plus, self.minus, unit=self.unit*other)
         else:
             return NotImplemented
     
-    def __rmul__(self, other):
-        return self*other
+    def __rmul__(self, other): # other * self
+        return self*other # multiplication is commutative
     
-    def __truediv__(self, other): # self divided by something
+    def __truediv__(self, other): # self divided by other
         if isinstance(other, type(self)):
-            result = self.value / other.value
-            pos = np.sqrt((self.plus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
-            neg = np.sqrt((self.minus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
-            return a_u(result, pos, neg, unit=self.unit/other.unit)
-        elif isinstance(other, u.Quantity):
-            result = u.Quantity(self.value, self.unit) / other
+            result = self.as_quantity / other.as_quantity
+            pos = np.sqrt((self.plus  / self.value)**2 + \
+                          (other.minus/other.value)**2) * np.abs(result)
+            neg = np.sqrt((self.minus / self.value)**2 + \
+                          (other.plus /other.value)**2) * np.abs(result)
+            return a_u(result.value, pos.value, neg.value, unit=result.unit)
+        elif isinstance(other, (u.Quantity, Number)):
+            result = self.as_quantity / other
             pos = (self.plus/self.value) * np.abs(result)
             neg = (self.minus/self.value) * np.abs(result)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
-        elif isinstance(other, Number):
-            result = self.value/other
-            pos = (self.minus/self.value) * np.abs(result)
-            neg = (self.plus/self.value) * np.abs(result)
-            return a_u(result, pos, neg, unit=self.unit)
         elif isinstance(other, u.UnitBase):
             return self * (1/other)
         else:
             return NotImplemented
     
-    def __rtruediv__(self, other): # something divided by self
-        if isinstance(other, u.Quantity):
-            result = other / u.Quantity(self.value, self.unit)
+    def __rtruediv__(self, other): # other divided by self
+        # no need to check if type(other) is a_u because that case would just invoke __truediv__()
+        if isinstance(other, (u.Quantity, Number)):
+            result = other / self.as_quantity
             pos = (self.minus/self.value) * np.abs(result)
             neg = (self.plus/self.value) * np.abs(result)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
-        elif isinstance(other, Number):
-            result = other / self.value
-            pos = (self.minus/self.value) * np.abs(result)
-            neg = (self.plus/self.value) * np.abs(result)
-            return a_u(result, pos, neg, unit=self.unit)
         elif isinstance(other, u.UnitBase):
             return other * (1/self)
         else:
@@ -266,7 +294,7 @@ class a_u(u.Quantity):
     def __pow__(self, other): # self to the something power
         if isinstance(other, type(self)):
             pass
-        elif isinstance(other, Number):
+        elif isinstance(other, (u.Quantity, Number)):
             other = a_u(other, 0, 0)
         else:
             return NotImplemented
@@ -308,76 +336,66 @@ class a_u(u.Quantity):
     def sqrt(self):
         return self**0.5
     
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if isinstance(other, type(self)):
-            pass
+            val_match = (self.as_quantity == other.as_quantity)
+            pos_match = (self.plus*self.unit == other.plus*other.unit)
+            neg_match = (self.minus*self.unit == other.minus*other.unit)
+            return val_match and pos_match and neg_match
+        elif isinstance(other, (u.Quantity, Number)):
+            return (self.as_quantity == other) and np.isclose(self.plus, 0.) and np.isclose(self.minus, 0.)
         else:
-            other = a_u(other, 0, 0)
-        return self.value == other.value and self.plus == other.plus and self.minus == other.minus
+            return False
     
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
         if isinstance(other, type(self)):
-            pass
-        elif isinstance(other, Number):
-            other = a_u(other, 0, 0)
+            return self.as_quantity > other.as_quantity
+        elif isinstance(other, (u.Quantity, Number)):
+            return self.as_quantity > other
         else:
-            return NotImplemented
-        return self.value > other.value
+            return False
     
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         if isinstance(other, type(self)):
-            pass
-        elif isinstance(other, Number):
-            other = a_u(other, 0, 0)
+            return self.as_quantity < other.as_quantity
+        elif isinstance(other, (u.Quantity, Number)):
+            return self.as_quantity < other
         else:
-            return NotImplemented
-        return self.value < other.value
+            return False
     
-    def __lshift__(self, other): # overloaded <<; definitively less than
+    def __lshift__(self, other) -> bool: # overloaded <<; definitively less than
         if isinstance(other, type(self)):
             pass
         else:
             other = a_u(other, 0, 0)
         return self.maximum < other.minimum
     
-    def __rshift__(self, other): # overloaded >>; definitively greater than
+    def __rshift__(self, other) -> bool: # overloaded >>; definitively greater than
         if isinstance(other, type(self)):
             pass
         else:
             other = a_u(other, 0, 0)
         return self.minimum > other.maximum
     
-    def __le__(self, other):
-        if isinstance(other, type(self)):
-            pass
-        elif isinstance(other, Number):
-            other = a_u(other, 0, 0)
-        else:
-            return NotImplemented
-        return self.value <= other.value
+    def __le__(self, other) -> bool:
+        return not (self > other)
     
-    def __ge__(self, other):
-        if isinstance(other, type(self)):
-            pass
-        elif isinstance(other, Number):
-            other = a_u(other, 0, 0)
-        else:
-            return NotImplemented
-        return self.value >= other.value
+    def __ge__(self, other) -> bool:
+        return not (self < other)
     
-    def conjugate(self):
+    def conjugate(self) -> Number:
         return self.value
     
-    def __isfinite__(self):
+    def __isfinite__(self) -> bool:
         return all(np.isfinite(self.items()))
     
-    def isna(self):
+    def isna(self) -> bool:
         """
         `pandas`-style NaN checker. Returns True if value is NaN or None, and False if neither.        
         """
         return (np.isnan(self.value) or (self.value is None))
     
-    def notna(self):
+    def notna(self) -> bool:
         """
         Inverse of `isna()`. Returns True if value is neither NaN nor None, and False if it is.
         """
