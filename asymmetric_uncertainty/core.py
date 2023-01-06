@@ -1,10 +1,11 @@
 """Asymmetric Uncertainty: A package for handling non-standard numerical uncertainties."""
 
 __author__ = "Caden Gobat"
-__author_affiliation__ = ["George Washington University", "Southwest Research Institute"]
+__author_affiliation__ = ["George Washington University",
+                          "Southwest Research Institute"]
 __contact__ = "<cgobat@gwu.edu>"
 __deprecated__ = False
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,10 +13,11 @@ import astropy.units as u
 import warnings
 from numbers import Number
 
+
 class a_u(u.Quantity):
     """
-    Class for representing and handling propagation of asymmetric uncertainties assuming a pseudo-Gaussian
-    probability distribution where the plus and minus errors in each direction of the nominal value are like
+    Class for representing and handling propagation of asymmetric uncertainties assuming a pseudo-
+    Gaussian probability distribution where the errors on either side of the nominal value are like
     modified 1-sigma standard deviations.
 
     Parameters
@@ -41,8 +43,10 @@ class a_u(u.Quantity):
     minus: Number
     unit : u.Unit
     
-    def __new__(cls, nominal: "Number|u.Quantity", pos_err: "Number|u.Quantity"=0.,
-                neg_err: "Number|u.Quantity"=0., unit: "str|u.Unit"=u.dimensionless_unscaled) -> "a_u":
+    def __new__(cls, nominal: "Number|u.Quantity",
+                     pos_err: "Number|u.Quantity"=0.,
+                     neg_err: "Number|u.Quantity"=0.,
+                     unit   : "str|u.UnitBase"=u.dimensionless_unscaled) -> "a_u":
         
         for check_val in (nominal, pos_err, neg_err):
             if isinstance(check_val, u.Quantity):
@@ -50,7 +54,7 @@ class a_u(u.Quantity):
         
         if unit == u.dimensionless_unscaled: # unit unspecified
             for check_val in (nominal, pos_err, neg_err):
-                if hasattr(check_val, "unit"): # input already has units?
+                if hasattr(check_val, "unit"): # does input already have units?
                     unit = check_val.unit
                     break
                 else: # if it doesn't, move on
@@ -65,31 +69,49 @@ class a_u(u.Quantity):
         if hasattr(neg_err, "unit"):
             neg_err = neg_err.to(unit).value
         
-        obj = super().__new__(cls, value=nominal, unit=unit)
+        obj: cls = super().__new__(cls, value=nominal, unit=unit)
         # astropy Quantity initializes self.value and self.unit
-        obj._init_err(pos_err, neg_err)
+        try:
+            obj._initialize_err(pos_err, neg_err)
+        except:
+            print(type(obj), obj)
         return obj
     
-    def _init_err(self, pos_err: Number, neg_err: Number) -> None:
-        self.plus = abs(float(pos_err))
-        self.minus = abs(float(neg_err))
-        self.sign = 1 if self.value >= 0 else -1
-    
-    def __repr__(self) -> str:
-        if np.isclose(self.plus, self.minus):
-            str_repr = f"{self.value} ± {self.plus}{self._unitstr}"
+    def _initialize_err(self, pos_err: Number, neg_err: Number) -> None:
+        self.__dict__["value"] = self.value
+        if self.isscalar:
+            self.plus = abs(float(pos_err))
+            self.minus = abs(float(neg_err))
+            self._sign = 1 if self.value >= 0 else -1
         else:
-            str_repr = f"{self.value} (+{self.plus}, -{self.minus}){self._unitstr}"
-        return str_repr
+            self.plus = [abs(float(x)) for x in pos_err]
+            self.minus = [abs(float(x)) for x in neg_err]
+            self.plus = [1 if x >= 0 else -1 for x in self.value]
+
+    def __str__(self) -> str:
+        return self.__repr__()
+            
+    def __repr__(self) -> str:
+        if self.isscalar:
+            if np.isclose(self.plus, self.minus):
+                str_repr = f"{self.value} ± {self.plus}{self._unitstr}"
+            else:
+                str_repr = f"{self.value} (+{self.plus}, -{self.minus}){self._unitstr}"
+            return str_repr
+        else:
+            return f"<Array of {type(self).__name__!r} objects. (length={len(self)})>"
     
     def _repr_latex_(self) -> str:
-        if np.isclose(self.plus, self.minus):
-            str_repr = f"${self.value} \pm {self.plus}$"
+        if self.isscalar:
+            if np.isclose(self.plus, self.minus):
+                str_repr = f"${self.value} \pm {self.plus}$"
+            else:
+                str_repr = f"${self.value}_{{-{self.minus}}}^{{+{self.plus}}}$"
+            if self.unit.to_string():
+                str_repr += " " + self.unit._repr_latex_()
+            return str_repr
         else:
-            str_repr = f"${self.value}_{{-{self.minus}}}^{{+{self.plus}}}$"
-        if self.unit.to_string():
-            str_repr += " " + self.unit._repr_latex_()
-        return str_repr
+            return f"<array of {type(self).__name__!r} objects. __repr__() is not yet implemented>"
 
     def __format__(self, format_spec) -> str:
         try:
@@ -118,13 +140,17 @@ class a_u(u.Quantity):
         return (self.value - self.minus)*self.unit
     
     @property
-    def as_quantity(self) -> u.Quantity:
-        return self.value * self.unit
-
-    @property
     def is_symmetric(self) -> bool:
         return np.isclose(self.plus, self.minus)
     
+    def as_Quantity(self) -> u.Quantity:
+        return self.value * self.unit
+
+    def to(self, target: u.UnitBase) -> "a_u":
+        items_as_Quantities = self.items()*self.unit # 3-tuple of `u.Quantity` objects
+        converted = [q.to(target) for q in items_as_Quantities]
+        return a_u(*converted)
+
     def pdf(self, x) -> np.ndarray:
         """
         Computes and returns the values of the probability distribution function for the specified input.
@@ -188,35 +214,35 @@ class a_u(u.Quantity):
         else:
             return a_u(self.value, new_pos, new_neg, unit=self.unit)
     
-    def items(self) -> tuple:
+    def items(self) -> "tuple[float, float, float]":
         """
         Returns a tuple of `(value, plus, minus)`.
         """
         return (self.value, self.plus, self.minus)
     
     def __int__(self) -> int:
-        return int(self.as_quantity)
+        return int(self.as_Quantity())
     
     def __float__(self) -> float:
-        return float(self.as_quantity)
+        return float(self.as_Quantity())
     
     def __neg__(self):
         return a_u(-self.value, self.minus, self.plus, self.unit)
     
     def __add__(self, other): # self + other
         if isinstance(other, type(self)):
-            result = self.as_quantity + other.as_quantity
+            result = self.as_Quantity() + other.as_Quantity()
             pos = np.sqrt(self.plus**2 + other.plus**2)
             neg = np.sqrt(self.minus**2 + other.minus**2)
             #print("added", self, "+", other, "=", a_u(result, pos, neg))
             return a_u(result, pos, neg, unit=result.unit)
         elif isinstance(other, u.Quantity):
-            result = self.as_quantity + other
+            result = self.as_Quantity() + other
             pos = (self.plus*self.unit).to(result.unit)
             neg = (self.minus*self.unit).to(result.unit)
             return a_u(result.value, pos.value, neg.value, result.unit)
         elif isinstance(other, Number):
-            result = self.as_quantity + other
+            result = self.as_Quantity() + other
             return a_u(result.value, self.plus, self.minus, result.unit)
         else:
             return NotImplemented
@@ -226,13 +252,13 @@ class a_u(u.Quantity):
     
     def __sub__(self, other): # self - other
         if isinstance(other, type(self)):
-            result = self.as_quantity - other.as_quantity
+            result = self.as_Quantity() - other.as_Quantity()
             pos = np.sqrt((self.plus*self.unit)**2 + (other.minus*other.unit)**2)
             neg = np.sqrt((self.minus*self.unit)**2 + (other.plus*other.unit)**2)
             #print("subtracted", other, "from", self, "=", a_u(result, pos, neg))
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
         elif isinstance(other, (u.Quantity, Number)):
-            result = self.as_quantity - other
+            result = self.as_Quantity() - other
             pos = (self.plus*self.unit).to(result.unit)
             neg = (self.minus*self.unit).to(result.unit)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
@@ -244,12 +270,12 @@ class a_u(u.Quantity):
     
     def __mul__(self, other): # self * other
         if isinstance(other, type(self)):
-            result = self.as_quantity * other.as_quantity
+            result = self.as_Quantity() * other.as_Quantity()
             pos = np.sqrt((self.plus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
             neg = np.sqrt((self.minus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
             return a_u(result.value, pos, neg, unit=result.unit)
         elif isinstance(other, (u.Quantity, Number)):
-            result = self.as_quantity * other
+            result = self.as_Quantity() * other
             pos = (self.plus/self.value) * np.abs(result)
             neg = (self.minus/self.value) * np.abs(result)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
@@ -263,14 +289,14 @@ class a_u(u.Quantity):
     
     def __truediv__(self, other): # self divided by other
         if isinstance(other, type(self)):
-            result = self.as_quantity / other.as_quantity
+            result = self.as_Quantity() / other.as_Quantity()
             pos = np.sqrt((self.plus  / self.value)**2 + \
                           (other.minus/other.value)**2) * np.abs(result)
             neg = np.sqrt((self.minus / self.value)**2 + \
                           (other.plus /other.value)**2) * np.abs(result)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
         elif isinstance(other, (u.Quantity, Number)):
-            result = self.as_quantity / other
+            result = self.as_Quantity() / other
             pos = (self.plus/self.value) * np.abs(result)
             neg = (self.minus/self.value) * np.abs(result)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
@@ -282,7 +308,7 @@ class a_u(u.Quantity):
     def __rtruediv__(self, other): # other divided by self
         # no need to check if type(other) is a_u because that case would just invoke __truediv__()
         if isinstance(other, (u.Quantity, Number)):
-            result = other / self.as_quantity
+            result = other / self.as_Quantity()
             pos = (self.minus/self.value) * np.abs(result)
             neg = (self.plus/self.value) * np.abs(result)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
@@ -338,28 +364,28 @@ class a_u(u.Quantity):
     
     def __eq__(self, other) -> bool:
         if isinstance(other, type(self)):
-            val_match = (self.as_quantity == other.as_quantity)
+            val_match = (self.as_Quantity() == other.as_Quantity())
             pos_match = (self.plus*self.unit == other.plus*other.unit)
             neg_match = (self.minus*self.unit == other.minus*other.unit)
             return val_match and pos_match and neg_match
         elif isinstance(other, (u.Quantity, Number)):
-            return (self.as_quantity == other) and np.isclose(self.plus, 0.) and np.isclose(self.minus, 0.)
+            return (self.as_Quantity() == other) and np.isclose(self.plus, 0.) and np.isclose(self.minus, 0.)
         else:
             return False
     
     def __gt__(self, other) -> bool:
         if isinstance(other, type(self)):
-            return self.as_quantity > other.as_quantity
+            return self.as_Quantity() > other.as_Quantity()
         elif isinstance(other, (u.Quantity, Number)):
-            return self.as_quantity > other
+            return self.as_Quantity() > other
         else:
             return False
     
     def __lt__(self, other) -> bool:
         if isinstance(other, type(self)):
-            return self.as_quantity < other.as_quantity
+            return self.as_Quantity() < other.as_Quantity()
         elif isinstance(other, (u.Quantity, Number)):
-            return self.as_quantity < other
+            return self.as_Quantity() < other
         else:
             return False
     
@@ -401,11 +427,12 @@ class a_u(u.Quantity):
         """
         return not (np.isnan(self.value) or (self.value is None))
 
-class AsymmetricUncertainty(a_u): # alias for legacy namespace support
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warnings.warn("class AsymmetricUncertainty has been renamed. Use a_u instead.",
-                      DeprecationWarning, stacklevel=2)
+
+def AsymmetricUncertainty(*args, **kwargs) -> a_u: # alternate factory for legacy namespace support
+    warnings.warn("AsymmetricUncertainty has been renamed. Use a_u instead.",
+                  DeprecationWarning, stacklevel=2)
+    return a_u(*args, **kwargs)
+
 
 class UncertaintyArray(list):
     """
