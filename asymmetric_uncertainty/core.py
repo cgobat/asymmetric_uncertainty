@@ -1,25 +1,31 @@
-"""Asymmetric Uncertainty: A package for handling non-standard numerical uncertainties."""
+'''Asymmetric Uncertainty: A package for handling non-standard numerical uncertainties.'''
 
 __author__ = "Caden Gobat"
 __author_affiliation__ = ["George Washington University",
                           "Southwest Research Institute"]
 __contact__ = "<cgobat@gwu.edu>"
 __deprecated__ = False
-__version__ = "0.2.2"
+__version__ = "0.3.0-indev"
 
 import warnings
 from numbers import Number
+import math
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
-import astropy.units as u
+from astropy import units as u
+from astropy.utils import isiterable
+from astropy.nddata import IncompatibleUncertaintiesException
+
+log = logging.getLogger("Asymmetric Uncertainty")
 
 
 class a_u(u.Quantity):
-    """
+    '''
     Class for representing and handling propagation of asymmetric uncertainties assuming a pseudo-
     Gaussian probability distribution where the errors on either side of the nominal value are like
     modified 1-sigma standard deviations.
-
+    
     Parameters
     ----------
     nominal : numeric
@@ -30,7 +36,7 @@ class a_u(u.Quantity):
         the minus error on the value
     unit    : astropy.units.Unit
         physical unit with which to initialize the quantity
-
+    
     Attributes
     ----------
     value : numeric
@@ -41,10 +47,10 @@ class a_u(u.Quantity):
         the negative error on the value
     unit  : astropy.units.Unit
         the physical units of the quantity
-    """
-    value: Number
-    plus : Number
-    minus: Number
+    '''
+    value: "Number|np.ndarray"
+    plus : "Number|np.ndarray"
+    minus: "Number|np.ndarray"
     unit : u.Unit
     
     def __new__(cls, nominal: "Number|u.Quantity",
@@ -53,9 +59,13 @@ class a_u(u.Quantity):
                      unit   : "str|u.UnitBase"=u.dimensionless_unscaled,
                      **quantity_kwargs) -> "a_u":
         
-        for check_val in (nominal, pos_err, neg_err):
-            if isinstance(check_val, u.Quantity):
-                assert check_val.isscalar, "Input values must be scalars, not arrays."
+        if isiterable(nominal):
+            if any([isinstance(nominal[i], cls) for i in range(len(nominal))]):
+                pos_err = [x.plus for x in nominal]
+                neg_err = [x.minus for x in nominal]
+                nominal = [x.value for x in nominal]
+            else:
+                assert isiterable(pos_err) and isiterable(neg_err)
         
         if unit == u.dimensionless_unscaled: # unit unspecified
             for check_val in (nominal, pos_err, neg_err):
@@ -74,14 +84,12 @@ class a_u(u.Quantity):
         if hasattr(neg_err, "unit"):
             neg_err = neg_err.to(unit).value
         
+        log.debug(f"Initializing with nominal={nominal}, pos_err={pos_err}, neg_err={neg_err}, unit={unit}")
         obj: cls = super().__new__(cls, value=nominal, unit=unit, **quantity_kwargs)
         # astropy Quantity initializes self.value and self.unit
-        try:
-            obj._initialize_err(pos_err, neg_err)
-        except:
-            warnings.warn("Failed to initialize errors.", RuntimeWarning)
+        obj._set_err(pos_err, neg_err)
         return obj
-
+    
     # **************** INSTANCE PROPERTIES ****************
     @property
     def maximum(self) -> Number:
@@ -99,22 +107,26 @@ class a_u(u.Quantity):
             return [np.isclose(pos, neg) for pos, neg in zip(self.plus, self.minus)]
     
     # **************** ERROR INITIALIZATION/MANIPULATION ****************
-    def _initialize_err(self, pos_err: Number, neg_err: Number) -> None:
+    def _set_err(self, pos_err: Number, neg_err: Number) -> None:
         self.__dict__["value"] = self.value
-        if self.isscalar:
-            self.plus = abs(float(pos_err))
-            self.minus = abs(float(neg_err))
-            self._sign = 1. if self.value > 0 else -1. if self.value < 0 else 0.
-        else:
-            self.plus = np.array([abs(float(x)) for x in pos_err])
-            self.minus = np.array([abs(float(x)) for x in neg_err])
-            self._sign = np.array([1. if x > 0 else -1. if x < 0 else 0. for x in self.value])
-
+        try:    
+            if self.isscalar:
+                self.plus = abs(float(pos_err))
+                self.minus = abs(float(neg_err))
+                self._sign = 1. if self.value > 0 else -1. if self.value < 0 else 0.
+            else:
+                self.plus = np.abs(pos_err)
+                self.minus = np.abs(neg_err)
+                # self._sign = np.array([1. if x > 0 else -1. if x < 0 else 0. for x in self.value.ravel()])
+                assert self.plus.shape == self.minus.shape == self.value.shape, "One or both uncertainty arrays' shape(s) is incompatible with value array."
+        except Exception as orig_exc:
+            raise IncompatibleUncertaintiesException(f"The specified uncertainties (pos={self.plus}, neg={self.minus}) could not be set on value(s) {self.value}.") from orig_exc
+    
     def add_error(self, delta, how="quadrature", inplace=False):
-        """
+        '''
         Adds `delta` to an instance's existing error. Possible `how`s are `quadrature`, `straight`, or `split`.
         If `inplace` is `True`, the existing object's errors are modified in place. If it is `False`, a new instance is returned.
-        """
+        '''
         if how=="quadrature":
             new_pos = np.sqrt(self.plus**2 + delta**2)
             new_neg = np.sqrt(self.minus**2 + delta**2)
@@ -134,17 +146,10 @@ class a_u(u.Quantity):
         
     # **************** OUTPUT FORMATTING/DISPLAY MAGIC METHODS ****************
     def __str__(self) -> str:
-        return self.__repr__()
+        return f"{self}"
             
     def __repr__(self) -> str:
-        if self.isscalar:
-            if np.isclose(self.plus, self.minus):
-                str_repr = f"<{self.value} ± {self.plus}{self._unitstr}>"
-            else:
-                str_repr = f"<{self.value} (+{self.plus}, -{self.minus}){self._unitstr}>"
-            return str_repr
-        else:
-            return "[" + ", ".join([element.__repr__() for element in self]) + "]"
+        return f"{self}"
     
     def _repr_latex_(self) -> str:
         if self.isscalar:
@@ -171,34 +176,41 @@ class a_u(u.Quantity):
                 str_repr += " " + self.unit._repr_latex_()
             return str_repr
         else:
-            return "[" + ", ".join([element._repr_latex_() for element in self]) + "]"
-
+            return r"$\left[" + ", ".join([element._repr_latex_().strip("$") for element in self]) + r"\right]$"
+    
     def __format__(self, format_spec) -> str:
-        try:
+        if self.isscalar:
             val = format(self.value, format_spec)
             pos = format(self.plus, format_spec)
             neg = format(self.minus, format_spec)
-            sym_flag = (pos == neg)
+            sym_flag = (pos == neg) # do formatted strings match?
             overall_fmt = "s"
-        except ValueError:
-            val = self.value
-            pos = self.plus
-            neg = self.minus
-            sym_flag = self.issymmetric
-            overall_fmt = format_spec
-        if sym_flag:
-            return format(f"{val} ± {pos}{self._unitstr}", overall_fmt)
+            if sym_flag:
+                return format(f"<{val} ± {pos}{self._unitstr}>", overall_fmt)
+            else:
+                return format(f"<{val} (+{pos}, -{neg}){self._unitstr}>", overall_fmt)
         else:
-            return format(f"{val} (+{pos}, -{neg}){self._unitstr}", overall_fmt)
+            formatted_list = [format(elem, format_spec) for elem in self]
+            return "[" + ", ".join(formatted_list) + "]"
     
     # **************** MISCELLANEOUS ****************
     def __reduce__(self):
         return NotImplemented
     
+    def __iter__(self):
+        if self.isscalar:
+            raise TypeError(f"Single '{type(self).__name__}' objects are not iterable on their own.")
+        
+        def self_iter(): # generator
+            for val, pos, neg in zip(self.value, self.plus, self.minus):
+                yield self.__class__(val, pos, neg, self.unit)
+        
+        return self_iter()
+    
     def items(self, units=True) -> "tuple[float]|tuple[u.Quantity]":
-        """
+        '''
         Returns a tuple of `(value, plus, minus)`, either with units or without.
-        """
+        '''
         if units:
             return (self.value*self.unit, self.plus*self.unit, self.minus*self.unit)
         else:
@@ -207,12 +219,12 @@ class a_u(u.Quantity):
     # **************** CONVERSIONS AND CASTING METHODS ****************
     def as_Quantity(self) -> u.Quantity:
         return self.value * self.unit
-
+    
     def to(self, target: u.UnitBase) -> "a_u":
         '''Unit conversion method'''
         converted = [q.to(target) for q in self.items(units=True)]
         return a_u(*converted)
-
+    
     def __int__(self) -> int:
         return int(self.as_Quantity())
     
@@ -221,13 +233,23 @@ class a_u(u.Quantity):
     
     def __neg__(self):
         return a_u(-self.value, self.minus, self.plus, self.unit)
-
+    
     def __abs__(self):
         '''Absolute value'''
         if self < 0:
-            return -self
+            return -self # calls self.__neg__()
         else:
             return self
+    
+    def __array_finalize__(self, obj):
+        super_array_finalize = super().__array_finalize__(obj)
+        if super_array_finalize: # isn't None
+            log.debug(f"super()'s array_finalize: {super_array_finalize}")
+        
+        if hasattr(obj, "plus") and hasattr(obj, "minus"):
+            self._set_err(obj.plus, obj.minus)
+        else:
+            pass
     
     # **************** ARITHMETIC OPERATORS AND MATH OPERATIONS ****************
     def __array_ufunc__(self, function, method, *inputs, **kwargs):
@@ -253,19 +275,24 @@ class a_u(u.Quantity):
             return self._sign
         elif fname == "absolute":
             return abs(self)
+        elif fname == "isfinite":
+            return math.isfinite(self)
         elif fname == "multiply":
-            return [self.__mul__(x) for x in inputs[-1]]
+            products = [self.__mul__(x) for x in inputs if not (x is self)]
+            return self.__class__([x.value for x in products],
+                                  [x.plus for x in products],
+                                  [x.minus for x in products])
         else:
-            warnings.warn(f"ufunc {fname!r} is not (yet) implemented for quantities with asymmetric uncertainties.", Warning)
+            log.warning(f"ufunc {fname} is not (yet) implemented for quantities with asymmetric uncertainties.")
             return NotImplemented
-
+    
     def __add__(self, other): # self + other
         if isinstance(other, type(self)):
             other = other.to(self.unit)
             result = self.as_Quantity() + other.as_Quantity()
             pos = np.sqrt(self.plus**2 + other.plus**2)
             neg = np.sqrt(self.minus**2 + other.minus**2)
-            #print("added", self, "+", other, "=", a_u(result, pos, neg))
+            log.debug(f"added {self} + {other} = {a_u(result, pos, neg)}")
             return a_u(result, pos, neg, unit=result.unit)
         elif isinstance(other, u.Quantity):
             result = self.as_Quantity() + other
@@ -286,7 +313,7 @@ class a_u(u.Quantity):
             result = self.as_Quantity() - other.as_Quantity()
             pos = np.sqrt((self.plus*self.unit)**2 + (other.minus*other.unit)**2)
             neg = np.sqrt((self.minus*self.unit)**2 + (other.plus*other.unit)**2)
-            #print("subtracted", other, "from", self, "=", a_u(result, pos, neg))
+            log.debug(f"subtracted {other} from {self} = {a_u(result, pos, neg)}")
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
         elif isinstance(other, (u.Quantity, Number)):
             result = self.as_Quantity() - other
@@ -299,13 +326,13 @@ class a_u(u.Quantity):
     def __rsub__(self, other): # other - self
         return -(self - other) # leverage existing __sub__() and __neg__() implementations
     
-    def __mul__(self, other): # self * other
+    def __mul__(self, other) -> "a_u": # self * other
         if isinstance(other, type(self)):
             result = self.as_Quantity() * other.as_Quantity()
             pos = np.sqrt((self.plus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
             neg = np.sqrt((self.minus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
             return a_u(result.value, pos, neg, unit=result.unit)
-        elif isinstance(other, (u.Quantity, Number)):
+        elif isinstance(other, (np.ndarray, Number)):
             result = self.as_Quantity() * other
             pos = (self.plus/self.value) * np.abs(result)
             neg = (self.minus/self.value) * np.abs(result)
@@ -332,7 +359,7 @@ class a_u(u.Quantity):
             neg = (self.minus/self.value) * np.abs(result)
             return a_u(result.value, pos.value, neg.value, unit=result.unit)
         elif isinstance(other, u.UnitBase):
-            return self * (1/other)
+            return self * (1/other) # use self.__mul__(1/other)
         else:
             return NotImplemented
     
@@ -352,16 +379,16 @@ class a_u(u.Quantity):
         if isinstance(other, type(self)):
             pass
         elif isinstance(other, u.Quantity):
-            other = a_u(other, 0, 0, unit=other.unit)
+            other = a_u(other.value, 0, 0, unit=other.unit)
         elif isinstance(other, Number):
-            other = a_u(other, 0, 0, unit=self.unit)
+            other = a_u(other, 0, 0, unit=u.dimensionless_unscaled)
         else:
             return NotImplemented
         result = self.as_Quantity()**other.as_Quantity()
         pos = np.abs(result)*np.sqrt((self.plus*other.value/self.value)**2 + (other.plus*np.log(self.value))**2)
         neg = np.abs(result)*np.sqrt((self.minus*other.value/self.value)**2 + (other.minus*np.log(self.value))**2)
-        #print("raised", self, "to", other, "=", a_u(result, pos, neg))        
-        return a_u(result, pos, neg)
+        log.debug(f"raised {self} to {other} = {a_u(result, pos, neg)}")
+        return a_u(result.value, pos, neg, result.unit)
     
     def __rpow__(self, other): # something to the self power
         if isinstance(other, type(self)):
@@ -369,42 +396,51 @@ class a_u(u.Quantity):
         elif isinstance(other, u.Quantity):
             other = a_u(other, 0, 0, unit=other.unit)
         elif isinstance(other, Number):
-            other = a_u(other, 0, 0, unit=self.unit)
+            other = a_u(other, 0, 0, unit=u.dimensionless_unscaled)
         else:
             return NotImplemented
         result = other.as_Quantity()**self.as_Quantity()
         pos = np.abs(result)*np.sqrt((other.plus*self.value/other.value)**2 + (self.plus*np.log(other.value))**2)
         neg = np.abs(result)*np.sqrt((other.minus*self.value/other.value)**2 + (self.minus*np.log(other.value))**2)
-        #print("raised", other, "to", self, "=", a_u(result, pos, neg))                
+        log.debug(f"raised {other} to {self} = {a_u(result, pos, neg)}")
         return a_u(result.value, pos, neg, unit=result.unit)
     
     def log10(self):
         result = np.log10(self.as_Quantity())
         pos = (self.plus*self.unit)/(self.as_Quantity()*np.log(10))
         neg = (self.minus*self.unit)/(self.as_Quantity()*np.log(10))
-        #print("logged", self, "=", a_u(result, pos, neg))
-        return a_u(result, pos, neg)
-
+        log.debug(f"logged {self} = {a_u(result, pos, neg)}")
+        if hasattr(result, "unit"):
+            return a_u(result.value, pos, neg, result.unit)
+        else:
+            return a_u(result, pos, neg)
+    
     def log2(self):
         result = np.log2(self.as_Quantity())
         pos = (self.plus*self.unit)/(self.as_Quantity()*np.log(10))
         neg = (self.minus*self.unit)/(self.as_Quantity()*np.log(10))
-        return a_u(result, pos, neg)
+        if hasattr(result, "unit"):
+            return a_u(result.value, pos, neg, result.unit)
+        else:
+            return a_u(result, pos, neg)
     
     def log(self):
         result = np.log(self.as_Quantity())
         pos = (self.plus*self.unit)/self.as_Quantity()
         neg = (self.minus*self.unit)/self.as_Quantity()
-        return a_u(result, pos, neg)
-
+        if hasattr(result, "unit"):
+            return a_u(result.value, pos, neg, result.unit)
+        else:
+            return a_u(result, pos, neg)
+    
     def exp(self):
         e = float(np.exp(1))
         return e**self
-
+    
     def sqrt(self):
         return self**0.5
-
-    # **************** COMPARISON OPERATIONS AND CHECKS ****************
+    
+    # **************** COMPARISON OPERATORS AND CHECKS ****************
     def __eq__(self, other) -> bool:
         if isinstance(other, type(self)):
             val_match = (self.as_Quantity() == other.as_Quantity())
@@ -456,22 +492,22 @@ class a_u(u.Quantity):
         return all(np.isfinite(self.items()))
     
     def isna(self) -> bool:
-        """
+        '''
         `pandas`-style NaN checker. Returns True if value is NaN or None, and False if neither.        
-        """
+        '''
         return (np.isnan(self.as_Quantity()) or (self.value is None))
     
     def notna(self) -> bool:
-        """
+        '''
         Inverse of `isna()`. Returns True if value is neither NaN nor None, and False if it is.
-        """
+        '''
         return not self.isna()
-
+    
     # **************** DISTRIBUTION FUNCTIONS AND PLOTTING ****************
     def pdf(self, x) -> np.ndarray:
-        """
+        '''
         Computes and returns the values of the probability distribution function for the specified input.
-        """
+        '''
         return np.piecewise(x, [x<self.value, x>=self.value],
                             [lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * \
                                         np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
@@ -479,16 +515,16 @@ class a_u(u.Quantity):
                                         np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
     
     def cdf(self, x) -> np.ndarray:
-        """
+        '''
         Computes and returns the values of the cumulative distribution function for the specified input.
-        """
+        '''
         return np.cumsum(self.pdf(x))/np.sum(self.pdf(x))
     
     def pdfplot(self, num_sigma=5, discretization=100, **kwargs) -> None:
-        """
+        '''
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
-        """
+        '''
         neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
         pos_x = np.linspace(self.value, self.value+(num_sigma*self.minus), discretization)
         x = np.hstack([neg_x, pos_x])
@@ -497,10 +533,10 @@ class a_u(u.Quantity):
         return None
     
     def cdfplot(self, num_sigma=5, discretization=100, **kwargs) -> None:
-        """
+        '''
         Plots the associated CDF over the specified number of sigma, using 2*`discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
-        """
+        '''
         neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
         pos_x = np.linspace(self.value, self.value+(num_sigma*self.minus), discretization)
         x = np.hstack([neg_x, pos_x])
@@ -517,72 +553,16 @@ def AsymmetricUncertainty(*args, **kwargs) -> a_u:
     return a_u(*args, **kwargs)
 
 
-class UncertaintyArray(list):
-    """
-    Class for representing an array of `a_u` objects.
-    Mostly provides utilities for slicing and accessing various attributes.
-    """
-    def refresh(self):
-        for i in range(len(self)):
-            try:
-                self[i].value
-                self[i].plus
-                self[i].minus
-            except AttributeError:
-                self[i] = a_u(self[i], 0, 0)
-                
-        self.as_numpy = np.array(self.as_list)
-        self.flattened = self.as_numpy.flatten()
-        self.shape = self.as_numpy.shape
-        self.ndim = self.as_numpy.ndim
-
-        self.minus = [v.minus for v in self.as_list]
-        self.plus = [v.plus for v in self.as_list]
-        self.values = [v.value for v in self.as_list]
-    
-    def __init__(self, array=[]):
-
-        self.as_list = list(array)
-        self.refresh()
-
-    def __len__(self):
-        return len(self.as_list)
-
-    def __iter__(self):
-        return iter(self.as_list)
-
-    def __getitem__(self, key):
-        return self.as_list[key]
-
-    def __setitem__(self, key, val):
-        self.as_list[key] = val
-
-    def __str__(self):
-        return str([str(entry) for entry in self.as_list])
-
-    def __repr__(self):
-        return str(self)
-
-    def __contains__(self, item):
-        return item in self.as_list
-
-    def append(self, entry):
-        self.as_list.append(entry)
-        self.refresh()
-    
-    def pdf(self, x):
-        return np.sum([entry.pdf(x) for entry in self], axis=0)
-
 def pos_errors(array):
-    """
+    '''
     Stand-alone function to return an array of the positive errors of an array of `a_u` objects.
     Functional equivalent to `UncertaintyArray(array).plus`.
-    """
+    '''
     return [v.plus for v in array]
 
 def neg_errors(array):
-    """
+    '''
     Stand-alone function to return an array of the negative errors of an array of `a_u` objects.
     Functional equivalent to `UncertaintyArray(array).minus`.
-    """
+    '''
     return [v.minus for v in array]
