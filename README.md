@@ -9,11 +9,12 @@ In science and engineering, many values and quantities have uncertainties associ
 This repository contains the `asymmetric_uncertainty` Python package, which implements the `a_u` class for dealing with these kinds of numbers in practice. Usage is very simple:
 
 ```python
-from asymmetric_uncertainty import a_u
-
-x = a_u(3.0, 0.2, 0.4)
-
-print(x + 1)
+>>> from asymmetric_uncertainty import a_u
+>>> x = a_u(3.0, 0.2, 0.4)
+>>> print(x + 1)
+```
+```
+4.0 (+0.2, -0.4)
 ```
 
 Here we see how to create an instance of the class representing the example number given before: $3.0_{-0.4}^{+0.2}$. The initialization arguments are the nominal value, positive error, and negative error—in that order. `x` will play nicely with other numeric objects under most mathematical operations, and its errors will propagate appropriately.
