@@ -60,7 +60,7 @@ class a_u(u.Quantity):
                      **quantity_kwargs) -> "a_u":
         
         if isiterable(nominal):
-            if any([isinstance(nominal[i], cls) for i in range(len(nominal))]):
+            if any([isinstance(elem, cls) for elem in nominal]):
                 pos_err = [x.plus for x in nominal]
                 neg_err = [x.minus for x in nominal]
                 nominal = [x.value for x in nominal]
@@ -128,21 +128,21 @@ class a_u(u.Quantity):
         If `inplace` is `True`, the existing object's errors are modified in place. If it is `False`, a new instance is returned.
         '''
         if how=="quadrature":
-            new_pos = np.sqrt(self.plus**2 + delta**2)
-            new_neg = np.sqrt(self.minus**2 + delta**2)
+            new_pos = np.sqrt((self.plus*self.unit)**2 + delta**2)
+            new_neg = np.sqrt((self.minus*self.unit)**2 + delta**2)
         elif how=="straight":
-            new_pos = self.plus + delta
-            new_neg = self.minus + delta
+            new_pos = (self.plus*self.unit) + delta
+            new_neg = (self.minus*self.unit) + delta
         elif how=="split":
-            new_pos = self.plus + delta/2
-            new_neg = self.minus + delta/2
+            new_pos = (self.plus*self.unit) + delta/2
+            new_neg = (self.minus*self.unit) + delta/2
         else:
             raise ValueError(f"'how' should be one of {{'quadrature', 'straight', 'split'}}")
         if inplace:
             self.plus = new_pos
             self.minus = new_neg
         else:
-            return a_u(self.value, new_pos, new_neg, unit=self.unit)
+            return a_u(self.value, new_pos/self.unit, new_neg/self.unit, unit=self.unit)
         
     # **************** OUTPUT FORMATTING/DISPLAY MAGIC METHODS ****************
     def __str__(self) -> str:
@@ -176,7 +176,7 @@ class a_u(u.Quantity):
                 str_repr += " " + self.unit._repr_latex_()
             return str_repr
         else:
-            return r"$\left[" + ", ".join([element._repr_latex_().strip("$") for element in self]) + r"\right]$"
+            return r"$\left[" + ", ".join([element._repr_latex_() for element in self]).replace("$", "") + r"\right]$"
     
     def __format__(self, format_spec) -> str:
         if self.isscalar:
@@ -522,7 +522,7 @@ class a_u(u.Quantity):
     
     def pdfplot(self, num_sigma=5, discretization=100, **kwargs) -> None:
         '''
-        Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
+        Plots the associated PDF over the specified number of sigma, using `2*discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
         '''
         neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
@@ -534,7 +534,7 @@ class a_u(u.Quantity):
     
     def cdfplot(self, num_sigma=5, discretization=100, **kwargs) -> None:
         '''
-        Plots the associated CDF over the specified number of sigma, using 2*`discretization` points.
+        Plots the associated CDF over the specified number of sigma, using `2*discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
         '''
         neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
