@@ -1,9 +1,5 @@
 # package initialization
 
-__author__ = "Caden Gobat"
-__author_affiliation__ = ["George Washington University", "Southwest Research Institute"]
-__contact__ = "<cgobat@gwu.edu>"
-__deprecated__ = False
-__version__ = "0.2.1"
-
+from .meta import (__author__, __author_affiliation__,
+                   __contact__, __version__, __deprecated__)
 from .core import *
