@@ -12,6 +12,7 @@ description = "A package that provides a class for representing numeric quantiti
 readme = "README.md"
 license = "GPL-3.0-or-later"
 dependencies = [
+    "astropy",
     "numpy",
     "matplotlib",
 ]
