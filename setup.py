@@ -14,7 +14,11 @@ if __name__ == '__main__':
           author_email=__contact__,
           packages=find_packages(),
           url="https://github.com/cgobat/asymmetric_uncertainty",
-          description="A package that implements a class to represent numeric quantities with asymmetric uncertainties.",
+          description="A package that implements a class to represent "
+                      "numeric quantities with asymmetric uncertainties.",
           long_description=readme,
           license=license,
-          install_requires=["numpy","matplotlib","astropy"])
+          python_requires=">=3.6",
+          install_requires=["numpy",
+                            "astropy",
+                            "matplotlib"])
