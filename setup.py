@@ -5,7 +5,7 @@ with open("./README.md","r") as f:
 
 if __name__ == '__main__':
     setup(name="asymmetric_uncertainty",
-          version="0.2.1",
+          version="0.2.2",
           author="Caden Gobat",
           author_email="cgobat@gwu.edu",
           packages=find_packages(),
