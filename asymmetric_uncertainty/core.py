@@ -93,9 +93,19 @@ class a_u:
         if hasattr(x,'__len__'):
             ret = np.zeros(shape=len(x))
             for i in range(len(x)):
-                ret[i] = np.sum( self.pdf( x_arr[ : np.argmin(x[i] >= x_arr)] ) ) / np.sum(self.pdf(x_arr) )
+                if x[i] < x_arr[0]:
+                    ret[i] = 0
+                elif x[i] > x_arr[-1]:
+                    ret[i] = 1
+                else:
+                    ret[i] = np.sum( self.pdf( x_arr[ : np.argmin(x[i] >= x_arr)] ) ) / np.sum(self.pdf(x_arr) )
+        else:
+            if x < x_arr[0]:
+                ret = 0
+            elif x > x_arr[-1]:
+                ret = 1
             else:
-                ret = np.sum( self.pdf( x_arr[ : np.argmin(x >= x_arr)] ) ) / np.sum(self.pdf(x_arr) )  
+                ret = np.sum( self.pdf( x_arr[ : np.argmin(x >= x_arr)] ) ) / np.sum(self.pdf(x_arr) )
 
         return ret
 
