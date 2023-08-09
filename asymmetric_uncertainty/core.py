@@ -79,8 +79,8 @@ class a_u:
         Computes and returns the values of the probability distribution function for the specified input.
         """
         return np.piecewise(x, [x<self.value, x>=self.value],
-                            [lambda x : 1/np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
-                             lambda x : 1/np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
+                            [lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
+                             lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
     
     def cdf(self,x,num_sigma=5,discretization=100):
         """
