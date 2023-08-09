@@ -98,14 +98,14 @@ class a_u:
                 elif x[i] > x_arr[-1]:
                     ret[i] = 1
                 else:
-                    ret[i] = np.sum( self.pdf( x_arr[ : np.argmin(x[i] >= x_arr)] ) ) / np.sum(self.pdf(x_arr) )
+                    ret[i] = np.sum( self.pdf( x_arr[ : np.argmin(x[i] >= x_arr)] ) )
         else:
             if x < x_arr[0]:
                 ret = 0
             elif x > x_arr[-1]:
                 ret = 1
             else:
-                ret = np.sum( self.pdf( x_arr[ : np.argmin(x >= x_arr)] ) ) / np.sum(self.pdf(x_arr) )
+                ret = np.sum( self.pdf( x_arr[ : np.argmin(x >= x_arr)] ) )
 
         return ret
 
