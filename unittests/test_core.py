@@ -52,7 +52,7 @@ class TestCore(unittest.TestCase):
 
         self.assertAlmostEqual(self.testValue.sqrt().value, np.sqrt(3.0)) 
 
-    def test_Summation(self):
+    def test_Addition(self):
 
         testValue_c : a_u = self.testValue_a + self.testValue_b
 
@@ -90,7 +90,7 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(testValue_e.plus, self.testValue_a.plus) 
         self.assertAlmostEqual(testValue_e.minus, self.testValue_a.minus)  
 
-    def test_Exp(self):
+    def test_Pow(self):
         testValue_c : a_u = self.testValue_d**2
 
         #testValue_e : a_u = self.testValue_d * self.testValue_d
