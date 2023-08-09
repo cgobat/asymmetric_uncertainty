@@ -79,15 +79,26 @@ class a_u:
         Computes and returns the values of the probability distribution function for the specified input.
         """
         return np.piecewise(x, [x<self.value, x>=self.value],
-                            [lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
-                             lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
+                            [lambda x : 1/np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
+                             lambda x : 1/np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
     
-    def cdf(self,x):
+    def cdf(self,x,num_sigma=5,discretization=100):
         """
         Computes and returns the values of the cumulative distribution function for the specified input.
         """
-        return np.cumsum(self.pdf(x))/np.sum(self.pdf(x))
-        
+        neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
+        pos_x = np.linspace(self.value,self.value+(num_sigma*self.plus),discretization)
+        x_arr = np.array(list(neg_x)+list(pos_x))
+
+        if hasattr(x,'__len__'):
+            ret = np.zeros(shape=len(x))
+            for i in range(len(x)):
+                ret[i] = np.sum( self.pdf( x_arr[ : np.argmin(x[i] >= x_arr)] ) ) / np.sum(self.pdf(x_arr) )
+            else:
+                ret = np.sum( self.pdf( x_arr[ : np.argmin(x >= x_arr)] ) ) / np.sum(self.pdf(x_arr) )  
+
+        return ret
+
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
         """
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
@@ -95,8 +106,8 @@ class a_u:
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
         pos_x = np.linspace(self.value,self.value+(num_sigma*self.minus),discretization)
-        p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
-        p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
+        # p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
+        # p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
         x = np.array(list(neg_x)+list(pos_x))
         pdf = self.pdf(x)
         plt.plot(x,pdf,**kwargs)
@@ -109,8 +120,8 @@ class a_u:
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
         pos_x = np.linspace(self.value,self.value+(num_sigma*self.minus),discretization)
-        p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
-        p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
+        # p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
+        # p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
         x = np.array(list(neg_x)+list(pos_x))
         pdf = self.pdf(x)
         cdf = np.cumsum(pdf)/np.sum(pdf)
