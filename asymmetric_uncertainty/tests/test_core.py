@@ -64,8 +64,8 @@ class TestCore(unittest.TestCase):
 
         testValue_c : a_u = self.testValue_a - self.testValue_b
 
-        self.assertAlmostEqual(testValue_c.plus, np.sqrt(2)) 
-        self.assertAlmostEqual(testValue_c.minus, np.sqrt(8))  
+        self.assertAlmostEqual(testValue_c.plus, np.sqrt(5)) 
+        self.assertAlmostEqual(testValue_c.minus, np.sqrt(5))  
 
 
     def test_Multiply(self):
@@ -87,8 +87,8 @@ class TestCore(unittest.TestCase):
 
         self.assertAlmostEqual(testValue_e.value, 1.0) 
 
-        self.assertAlmostEqual(testValue_e.plus, self.testValue_a.plus) 
-        self.assertAlmostEqual(testValue_e.minus, self.testValue_a.minus)  
+        self.assertAlmostEqual(testValue_e.plus, self.testValue_a.minus) 
+        self.assertAlmostEqual(testValue_e.minus, self.testValue_a.plus)  
 
     def test_Pow(self):
         testValue_c : a_u = self.testValue_d**2
