@@ -88,27 +88,12 @@ class a_u:
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
         pos_x = np.linspace(self.value,self.value+(num_sigma*self.plus),discretization)
-        x_arr = np.array(list(neg_x)+list(pos_x))
-
-        if hasattr(x,'__len__'):
-            ret = np.zeros(shape=len(x))
-            for i in range(len(x)):
-                if x[i] < x_arr[0]:
-                    ret[i] = 0
-                elif x[i] > x_arr[-1]:
-                    ret[i] = 1
-                else:
-                    ret[i] = np.sum( self.pdf( x_arr[ : np.argmin(x[i] >= x_arr)] ) )
-        else:
-            if x < x_arr[0]:
-                ret = 0
-            elif x > x_arr[-1]:
-                ret = 1
-            else:
-                ret = np.sum( self.pdf( x_arr[ : np.argmin(x >= x_arr)] ) )
-
-        return ret
-
+        x_full = np.concatenate([neg_x, pos_x])
+        pdf_vals = self.pdf(x_full)
+        pdf_sum = np.sum(pdf_vals) # NOT necessarily 1 due to spacing of x_full values
+        
+        return np.interp(x, x_full, np.cumsum(pdf_vals)/pdf_sum, left=0., right=1.)
+    
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
         """
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
