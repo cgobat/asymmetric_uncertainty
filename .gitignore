@@ -1,8 +1,7 @@
 build/
 dist/
 asymmetric_uncertainty.egg-info/
-asymmetric_uncertainty/__pycache__/
+**/__pycache__/
 .ipynb_checkpoints/
 venv/
-unittests/__pycache__/
 .vscode/
