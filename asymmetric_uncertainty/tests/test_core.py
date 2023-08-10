@@ -18,18 +18,18 @@ from asymmetric_uncertainty import a_u
 class TestCore(unittest.TestCase):
 
     def setUp(self): #We are only going to load the workbook once for each test case
-        self.testValue = a_u(3.0,0.2,0.4)
+        self.testValue = a_u(3.0, 0.2, 0.4)
 
-        self.testValue_a = a_u(10.0,1.0,2.0)
-        self.testValue_b = a_u(20.0,1.0,2.0)
+        self.testValue_a = a_u(10.0, 1.0, 2.0)
+        self.testValue_b = a_u(20.0, 1.0, 2.0)
 
-        self.testValue_one = a_u(1.0,0.0,0.0)
+        self.testValue_one = a_u(1.0, 0.0, 0.0)
 
-        self.testValue_d = a_u(1.0,1.0,2.0)
+        self.testValue_d = a_u(1.0, 1.0, 2.0)
 
     def test_Initialization(self):
 
-        self.assertIsInstance(self.testValue,a_u)
+        self.assertIsInstance(self.testValue, a_u)
 
         self.assertAlmostEqual(self.testValue.value, 3.0)
         self.assertAlmostEqual(self.testValue.plus, 0.2)
@@ -96,6 +96,8 @@ class TestCore(unittest.TestCase):
         #testValue_e : a_u = self.testValue_d * self.testValue_d
 
         self.assertAlmostEqual(testValue_c.value, 1.0) 
+        self.assertAlmostEqual(testValue_c.plus, 2.0) 
+        self.assertAlmostEqual(testValue_c.minus, 4.0) 
 
         #self.assertAlmostEqual(testValue_c.plus, testValue_e.plus) 
         #self.assertAlmostEqual(testValue_c.minus, testValue_e.minus)  
