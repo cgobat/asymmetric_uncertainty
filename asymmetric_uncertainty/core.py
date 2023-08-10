@@ -14,6 +14,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+from math import erf
+
+np_erf = np.vectorize(erf, doc="Vectorized error function at x.")  # prevents need for SciPy dependency
 
 class a_u:
     """
@@ -74,35 +77,33 @@ class a_u:
         else:
             return "$%f_{-%f}^{+%f}$" %(self.value,self.minus,self.plus)
         
-    def pdf(self,x):
+    def pdf(self, x):
         """
         Computes and returns the values of the probability distribution function for the specified input.
         """
-        return np.piecewise(x, [x<self.value, x>=self.value],
-                            [lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
-                             lambda x : np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
+        x_arr = np.asanyarray(x).astype(float)
+        pdf_arr =  np.piecewise(x_arr, [x_arr<self.value, x_arr>=self.value],
+                                [lambda x: np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
+                                 lambda x: np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
+        return pdf_arr.item() if np.isscalar(x) else pdf_arr
     
-    def cdf(self,x,num_sigma=5,discretization=100):
+    def cdf(self, x):
         """
         Computes and returns the values of the cumulative distribution function for the specified input.
         """
-        neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
-        pos_x = np.linspace(self.value,self.value+(num_sigma*self.plus),discretization)
-        x_full = np.concatenate([neg_x, pos_x])
-        pdf_vals = self.pdf(x_full)
-        pdf_sum = np.sum(pdf_vals) # NOT necessarily 1 due to spacing of x_full values
-        
-        return np.interp(x, x_full, np.cumsum(pdf_vals)/pdf_sum, left=0., right=1.)
+        x_arr = np.asanyarray(x).astype(float)
+        cdf_arr = np.piecewise(x_arr, [x_arr<self.value, x_arr>=self.value],
+                               [lambda x: 0.5*(1 + np_erf((x-self.value)/(self.minus*np.sqrt(2)))),
+                                lambda x: 0.5*(1 + np_erf((x-self.value)/(self.plus*np.sqrt(2))))])
+        return cdf_arr.item() if np.isscalar(x) else cdf_arr
     
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
         """
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
         """
-        neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
-        pos_x = np.linspace(self.value,self.value+(num_sigma*self.minus),discretization)
-        # p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
-        # p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
+        neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
+        pos_x = np.linspace(self.value, self.value+(num_sigma*self.plus), discretization)
         x = np.array(list(neg_x)+list(pos_x))
         pdf = self.pdf(x)
         plt.plot(x,pdf,**kwargs)
@@ -113,13 +114,10 @@ class a_u:
         Plots the associated CDF over the specified number of sigma, using 2*`discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
         """
-        neg_x = np.linspace(self.value-(num_sigma*self.minus),self.value,discretization)
-        pos_x = np.linspace(self.value,self.value+(num_sigma*self.minus),discretization)
-        # p_neg = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(neg_x-self.value)**2 / (2*self.minus**2))
-        # p_pos = np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(pos_x-self.value)**2 / (2*self.plus**2))
+        neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
+        pos_x = np.linspace(self.value, self.value+(num_sigma*self.plus), discretization)
         x = np.array(list(neg_x)+list(pos_x))
-        pdf = self.pdf(x)
-        cdf = np.cumsum(pdf)/np.sum(pdf)
+        cdf = self.cdf(x)
         plt.plot(x,cdf,**kwargs)
         plt.show()
         
