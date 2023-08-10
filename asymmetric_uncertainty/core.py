@@ -248,16 +248,18 @@ class a_u:
         #print("divided",other,"by",self,"=",a_u(result,pos,neg))        
         return a_u(result,pos,neg)
     
-    def __pow__(self,other): # self to the something power
-        if isinstance(other,type(self)):
-            pass
+    def __pow__(self, other): # self to the something power
+        if isinstance(other, type(self)):
+            abs_pow = abs(other)
         else:
-            other = a_u(other,0,0)
-        result = self.value**other.value
-        pos = np.abs(result)*np.sqrt((self.plus*other.value/self.value)**2 + (other.plus*np.log(self.value))**2)
-        neg = np.abs(result)*np.sqrt((self.minus*other.value/self.value)**2 + (other.minus*np.log(self.value))**2)
-        #print("raised",self,"to",other,"=",a_u(result,pos,neg))        
-        return a_u(result,pos,neg)
+            abs_pow = a_u(abs(other), 0., 0.)
+        result = self.value**abs_pow.value
+        pos = np.abs(result)*np.sqrt((self.plus*abs_pow.value/self.value)**2 + (abs_pow.plus*np.log(self.value))**2)
+        neg = np.abs(result)*np.sqrt((self.minus*abs_pow.value/self.value)**2 + (abs_pow.minus*np.log(self.value))**2)
+        if other < 0:
+            return 1/a_u(result, pos, neg)
+        else:
+            return a_u(result, pos, neg)
     
     def __rpow__(self,other): # something to the self power
         if isinstance(other,type(self)):
