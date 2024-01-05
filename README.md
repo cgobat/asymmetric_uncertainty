@@ -1,6 +1,6 @@
 # Asymmetric Uncertainty
 
-[![GPLv3 License](https://img.shields.io/github/license/cgobat/asymmetric_uncertainty)](https://opensource.org/licenses/GPL-3.0) [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) ![Python 3+](https://img.shields.io/badge/made%20with-Python%203-blue) [![ascl:2208.005](https://img.shields.io/badge/ascl-2208.005-blue.svg?colorB=262255)](https://ascl.net/2208.005)
+[![GPLv3 License](https://img.shields.io/github/license/cgobat/asymmetric_uncertainty)](https://opensource.org/licenses/GPL-3.0) [![Test status](https://github.com/cgobat/asymmetric_uncertainty/actions/workflows/main.yml/badge.svg)](https://github.com/cgobat/asymmetric_uncertainty/actions) ![Python 3+](https://img.shields.io/badge/made%20with-Python%203-blue) [![ascl:2208.005](https://img.shields.io/badge/ascl-2208.005-blue.svg?colorB=262255)](https://ascl.net/2208.005)
 
 Many values and quantities in science and engineering have associated uncertainties&mdash;for example, $3.0\pm0.3$ expresses a quantity whose measured or expected value is 3.0, but might reasonably be expected[^1] to have a true value anywhere between 2.7 and 3.3. This is a *symmetric* uncertainty, because the error is the same to either side of the central value. However, not all numbers behave this way: for example, we could write $3.0_{-0.4}^{+0.2}$ to signify that although the expected value is 3.0 as well, the magnitude of the uncertainty to the left and right of this value are not equivalent.
 
