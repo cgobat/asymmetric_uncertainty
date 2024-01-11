@@ -64,19 +64,22 @@ class a_u:
         self.minimum = self.value-self.minus
         self.sign = 1 if self.value >= 0 else -1
         self.is_symmetric = np.isclose(self.plus, self.minus)
-        
+    
     def __str__(self):
+        return f"{self}"
+    
+    def __format__(self, fmt_spec):
         if np.isclose(self.plus, self.minus):
-            return "{} ± {}".format(self.value,self.plus)
+            return f"{format(self.value, fmt_spec)} ± {format(self.plus, fmt_spec)}"
         else:
-            return "{} (+{}, -{})".format(self.value,self.plus,self.minus)
-        
-    def _repr_latex_(self):
+            return "%s (+%s, -%s)" % tuple(format(x, fmt_spec) for x in self.items())
+    
+    def _repr_latex_(self, float_fmt="f"):
         if np.isclose(self.plus, self.minus):
-            return "$%f \pm %f$" %(self.value,self.plus)
+            return f"${format(self.value, float_fmt)} \pm {format(self.plus, float_fmt)}$"
         else:
-            return "$%f_{-%f}^{+%f}$" %(self.value,self.minus,self.plus)
-        
+            return "$%s^{+%s}_{-%s}$" % tuple(format(x, float_fmt) for x in self.items())
+    
     def pdf(self, x):
         """
         Computes and returns the values of the probability distribution function for the specified input.
