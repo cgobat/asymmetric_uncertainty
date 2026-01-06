@@ -91,15 +91,20 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(testValue_e.minus, self.testValue_a.plus)  
 
     def test_Pow(self):
-        testValue_c : a_u = self.testValue_d**2
+        d_squared : a_u = self.testValue_d**2
 
-        #testValue_e : a_u = self.testValue_d * self.testValue_d
+        d_times_d : a_u = self.testValue_d * self.testValue_d
 
-        self.assertAlmostEqual(testValue_c.value, 1.0) 
-        self.assertAlmostEqual(testValue_c.plus, 2.0) 
-        self.assertAlmostEqual(testValue_c.minus, 4.0) 
+        self.assertAlmostEqual(d_squared.value, 1.0) 
+        self.assertAlmostEqual(d_squared.plus, 2.0) 
+        self.assertAlmostEqual(d_squared.minus, 4.0)
 
-        #self.assertAlmostEqual(testValue_c.plus, testValue_e.plus) 
-        #self.assertAlmostEqual(testValue_c.minus, testValue_e.minus)  
+        self.assertAlmostEqual(d_squared.value, d_times_d.value)
+        #self.assertAlmostEqual(d_squared.plus, d_times_d.plus) 
+        #self.assertAlmostEqual(d_squared.minus, d_times_d.minus)  
 
-
+        minus_two_power: a_u = self.testValue**(-2)
+        reciprocal_squared: a_u = 1/(self.testValue**2)
+        self.assertAlmostEqual(minus_two_power.value, reciprocal_squared.value)
+        self.assertAlmostEqual(minus_two_power.plus, reciprocal_squared.plus)
+        self.assertAlmostEqual(minus_two_power.minus, reciprocal_squared.minus)
