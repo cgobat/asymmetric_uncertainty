@@ -654,6 +654,85 @@ class a_u:
         """
         return not self.isna()
 
+    def _trig(self, function_name):
+        if _has_astropy() and self.unit.is_equivalent(u.dimensionless_unscaled):
+            angle = self.quantity.to_value(u.dimensionless_unscaled)
+            plus = self.plus_quantity.to_value(u.dimensionless_unscaled)
+            minus = self.minus_quantity.to_value(u.dimensionless_unscaled)
+        elif _has_astropy():
+            angle = self.quantity.to_value(u.rad)
+            plus = self.plus_quantity.to_value(u.rad)
+            minus = self.minus_quantity.to_value(u.rad)
+        else:
+            angle = self.value
+            plus = self.plus
+            minus = self.minus
+
+        if function_name == "sin":
+            result = np.sin(angle)
+            derivative = np.cos(angle)
+        elif function_name == "cos":
+            result = np.cos(angle)
+            derivative = -np.sin(angle)
+        elif function_name == "tan":
+            result = np.tan(angle)
+            derivative = 1/np.cos(angle)**2
+        else:
+            raise ValueError(function_name)
+
+        if derivative >= 0:
+            pos = derivative*plus
+            neg = derivative*minus
+        else:
+            pos = derivative*minus
+            neg = derivative*plus
+        return a_u(result, np.abs(pos), np.abs(neg))
+
+    __array_priority__ = 50000 # astropy Quantities are 10000 and FunctionQuantities are 40000
+
+    def __array_ufunc__(self, function, method, *inputs, **kwargs):
+        if method != "__call__" or kwargs.get("out") is not None:
+            return NotImplemented
+
+        name = function.__name__
+        if name in ("add", "subtract", "multiply", "true_divide", "divide", "power"):
+            left, right = inputs
+            if name == "add":
+                return self.__add__(right) if left is self else self.__radd__(left)
+            if name == "subtract":
+                return self.__sub__(right) if left is self else self.__rsub__(left)
+            if name == "multiply":
+                return self.__mul__(right) if left is self else self.__rmul__(left)
+            if name in ("true_divide", "divide"):
+                return self.__truediv__(right) if left is self else self.__rtruediv__(left)
+            return self.__pow__(right) if left is self else self.__rpow__(left)
+
+        if name in ("sin", "cos", "tan"):
+            return self._trig(name)
+        if name == "log":
+            return self.log()
+        if name == "log2":
+            return self.log2()
+        if name == "log10":
+            return self.log10()
+        if name == "exp":
+            return self.exp()
+        if name == "sqrt":
+            return self.sqrt()
+        if name in ("absolute", "fabs"):
+            return abs(self)
+        if name == "negative":
+            return -self
+        if name == "positive":
+            return a_u(self.value, self.plus, self.minus, unit=self.unit)
+        if name == "isfinite":
+            return all(np.isfinite(self.items()))
+        if name == "isnan":
+            return self.isna()
+        if name == "sign":
+            return self.sign
+        return NotImplemented
+
 
 class AsymmetricUncertainty(a_u):
     """Alias for legacy namespace support."""
