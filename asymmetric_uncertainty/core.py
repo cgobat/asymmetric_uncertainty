@@ -265,27 +265,49 @@ class a_u:
     
     def __pow__(self, other): # self to the something power
         if isinstance(other, type(self)):
-            abs_pow = abs(other)
+            exponent = other
         else:
-            abs_pow = a_u(abs(other), 0., 0.)
-        result = self.value**abs_pow.value
-        pos = np.abs(result)*np.sqrt((self.plus*abs_pow.value/self.value)**2 + (abs_pow.plus*np.log(self.value))**2)
-        neg = np.abs(result)*np.sqrt((self.minus*abs_pow.value/self.value)**2 + (abs_pow.minus*np.log(self.value))**2)
-        if other < 0:
-            return 1/a_u(result, pos, neg)
+            exponent = a_u(other, 0., 0.)
+
+        exponent_is_uncertain = exponent.plus != 0 or exponent.minus != 0
+        exponent_is_integer = exponent.value.is_integer()
+
+        if self.value < 0 and (exponent_is_uncertain or not exponent_is_integer):
+            raise ValueError("negative bases require an exact integer exponent")
+        if self.value == 0 and exponent_is_uncertain:
+            raise ValueError("uncertain exponents require a positive base")
+        if self.value == 0 and not exponent_is_integer:
+            raise ValueError("zero bases require an integer exponent")
+        if self.value == 0 and exponent.value < 0:
+            raise ValueError("zero cannot be raised to a negative power")
+
+        result = self.value**exponent.value
+
+        if self.value == 0:
+            if exponent.value == 1:
+                base_derivative = 1.0
+            else:
+                base_derivative = 0.0
         else:
-            return a_u(result, pos, neg)
+            base_derivative = exponent.value*self.value**(exponent.value - 1)
+
+        if exponent_is_uncertain:
+            exponent_derivative = result*np.log(self.value)
+        else:
+            exponent_derivative = 0.0
+
+        pos, neg = _propagated_errors(
+            (self, exponent),
+            (base_derivative, exponent_derivative),
+        )
+        return a_u(result, pos, neg)
     
-    def __rpow__(self,other): # something to the self power
+    def __rpow__(self, other): # something to the self power
         if isinstance(other,type(self)):
-            pass
+            base = other
         else:
-            other = a_u(other,0,0)
-        result = other.value**self.value
-        pos = np.abs(result)*np.sqrt((other.plus*self.value/other.value)**2 + (self.plus*np.log(other.value))**2)
-        neg = np.abs(result)*np.sqrt((other.minus*self.value/other.value)**2 + (self.minus*np.log(other.value))**2)
-        #print("raised",other,"to",self,"=",a_u(result,pos,neg))                
-        return a_u(result,pos,neg)
+            base = a_u(other,0,0)
+        return base**self
     
     def log10(self):
         result = np.log10(self.value)
