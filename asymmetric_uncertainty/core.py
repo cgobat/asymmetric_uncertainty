@@ -213,8 +213,8 @@ class a_u:
             other = a_u(other,0,0)
         
         result = self.value * other.value
-        pos = np.sqrt((self.plus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
-        neg = np.sqrt((self.minus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
+        pos = np.sqrt((self.plus*other.value)**2 + (other.plus*self.value)**2)
+        neg = np.sqrt((self.minus*other.value)**2 + (other.minus*self.value)**2)
         #print("multiplied",self,"by",other,"=",a_u(result,pos,neg))
         return a_u(result,pos,neg)
     
@@ -225,8 +225,8 @@ class a_u:
             other = a_u(other,0,0)
         
         result = self.value * other.value
-        pos = np.sqrt((self.plus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
-        neg = np.sqrt((self.minus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
+        pos = np.sqrt((self.plus*other.value)**2 + (other.plus*self.value)**2)
+        neg = np.sqrt((self.minus*other.value)**2 + (other.minus*self.value)**2)
         #print("multiplied",other,"by",self,"=",a_u(result,pos,neg))        
         return a_u(result,pos,neg)
     
@@ -236,8 +236,8 @@ class a_u:
         else:
             other = a_u(other,0,0)
         result = self.value / other.value
-        pos = np.sqrt((self.plus/self.value)**2 + (other.minus/other.value)**2) * np.abs(result)
-        neg = np.sqrt((self.minus/self.value)**2 + (other.plus/other.value)**2) * np.abs(result)
+        pos = np.sqrt((self.plus/other.value)**2 + (self.value*other.minus/other.value**2)**2)
+        neg = np.sqrt((self.minus/other.value)**2 + (self.value*other.plus/other.value**2)**2)
         #print("divided",self,"by",other,"=",a_u(result,pos,neg))        
         return a_u(result,pos,neg)
     
@@ -247,8 +247,8 @@ class a_u:
         else:
             other = a_u(other,0,0)
         result = other.value / self.value
-        pos = np.sqrt((other.plus/other.value)**2 + (self.minus/self.value)**2) * np.abs(result)
-        neg = np.sqrt((other.minus/other.value)**2 + (self.plus/self.value)**2) * np.abs(result)
+        pos = np.sqrt((other.plus/self.value)**2 + (other.value*self.minus/self.value**2)**2)
+        neg = np.sqrt((other.minus/self.value)**2 + (other.value*self.plus/self.value**2)**2)
         #print("divided",other,"by",self,"=",a_u(result,pos,neg))        
         return a_u(result,pos,neg)
     
