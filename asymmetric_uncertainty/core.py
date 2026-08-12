@@ -75,11 +75,23 @@ class a_u:
             self.value = float(nominal)
             self.plus = np.abs(float(pos_err))
             self.minus = np.abs(float(neg_err))
-        self.maximum = self.value+self.plus
-        self.minimum = self.value-self.minus
-        self.sign = 1 if self.value >= 0 else -1
-        self.is_symmetric = np.isclose(self.plus, self.minus)
-    
+
+    @property
+    def maximum(self):
+        return self.value + self.plus
+
+    @property
+    def minimum(self):
+        return self.value - self.minus
+
+    @property
+    def sign(self):
+        return 1 if self.value >= 0 else -1
+
+    @property
+    def is_symmetric(self):
+        return np.isclose(self.plus, self.minus)
+
     def __str__(self):
         return f"{self}"
     
@@ -452,6 +464,53 @@ class UncertaintyArray(list):
     def append(self, entry):
         super().append(entry)
         self.refresh()
+
+    def extend(self, iterable):
+        super().extend(iterable)
+        self.refresh()
+
+    def insert(self, index, entry):
+        super().insert(index, entry)
+        self.refresh()
+
+    def pop(self, index=-1):
+        entry = super().pop(index)
+        self.refresh()
+        return entry
+
+    def remove(self, entry):
+        super().remove(entry)
+        self.refresh()
+
+    def clear(self):
+        super().clear()
+        self.refresh()
+
+    def reverse(self):
+        super().reverse()
+        self.refresh()
+
+    def sort(self, *args, **kwargs):
+        super().sort(*args, **kwargs)
+        self.refresh()
+
+    def __setitem__(self, key, val):
+        super().__setitem__(key, val)
+        self.refresh()
+
+    def __delitem__(self, key):
+        super().__delitem__(key)
+        self.refresh()
+
+    def __iadd__(self, other):
+        super().__iadd__(other)
+        self.refresh()
+        return self
+
+    def __imul__(self, other):
+        super().__imul__(other)
+        self.refresh()
+        return self
 
     def pdf(self, x):
         return np.sum([entry.pdf(x) for entry in self], axis=0)
