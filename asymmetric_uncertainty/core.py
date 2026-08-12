@@ -95,9 +95,10 @@ class a_u:
         Computes and returns the values of the cumulative distribution function for the specified input.
         """
         x_arr = np.asanyarray(x).astype(float)
+        width_sum = self.plus + self.minus
         cdf_arr = np.piecewise(x_arr, [x_arr<self.value, x_arr>=self.value],
-                               [lambda x: 0.5*(1 + np_erf((x-self.value)/(self.minus*np.sqrt(2)))),
-                                lambda x: 0.5*(1 + np_erf((x-self.value)/(self.plus*np.sqrt(2))))])
+                               [lambda x: self.minus/width_sum * (1 + np_erf((x-self.value)/(self.minus*np.sqrt(2)))),
+                                lambda x: (self.minus + self.plus*np_erf((x-self.value)/(self.plus*np.sqrt(2))))/width_sum])
         return cdf_arr.item() if np.isscalar(x) else cdf_arr
     
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):

@@ -52,6 +52,37 @@ class TestCore(unittest.TestCase):
 
         self.assertAlmostEqual(self.testValue.sqrt().value, np.sqrt(3.0)) 
 
+    def test_Distribution(self):
+
+        width_sum = self.testValue.plus + self.testValue.minus
+
+        self.assertAlmostEqual(
+            self.testValue.cdf(self.testValue.value),
+            self.testValue.minus/width_sum,
+        )
+        self.assertAlmostEqual(self.testValue.cdf(-np.inf), 0.0)
+        self.assertAlmostEqual(self.testValue.cdf(np.inf), 1.0)
+
+        neg_x = np.linspace(
+            self.testValue.value - 10*self.testValue.minus,
+            self.testValue.value,
+            50001,
+        )
+        pos_x = np.linspace(
+            self.testValue.value,
+            self.testValue.value + 10*self.testValue.plus,
+            50001,
+        )
+        x = np.concatenate((neg_x[:-1], pos_x))
+        pdf = self.testValue.pdf(x)
+        self.assertAlmostEqual(np.trapezoid(pdf, x), 1.0, places=6)
+
+        self.assertAlmostEqual(
+            np.trapezoid(self.testValue.pdf(neg_x), neg_x),
+            self.testValue.cdf(self.testValue.value),
+            places=6,
+        )
+
     def test_Addition(self):
 
         testValue_c : a_u = self.testValue_a + self.testValue_b
