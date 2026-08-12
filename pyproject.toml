@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asymmetric_uncertainty"
-version = "0.2.10"
+version = "0.3.0"
 authors = [
     { name = "Caden Gobat", email = "cgobat@gwu.edu" },
 ]
