@@ -12,12 +12,28 @@ This repository contains the `asymmetric_uncertainty` Python package, which prov
 >>> from asymmetric_uncertainty import a_u
 >>> x = a_u(3.0, 0.2, 0.4)
 >>> print(x + 1)
-```
-```
 4.0 (+0.2, -0.4)
 ```
 
 Here we see how to create an instance of the class representing the example number given before: $3.0_{-0.4}^{+0.2}$. The initialization arguments are the nominal value, positive error, and negative error&mdash;in that order. `x` will play nicely with other numeric objects under most mathematical operations, and its errors will propagate appropriately. More complete examples can be found in the [`example.ipynb`](./example.ipynb) Jupyter notebook.
+
+
+### Astropy units
+
+`a_u` accepts [`astropy.units.Quantity`](https://docs.astropy.org/en/stable/units/quantity.html) values directly. The nominal value and both uncertainties are converted to a common unit at initialization, and arithmetic follows Astropy's unit-conversion rules:
+
+```python
+>>> from astropy import units as u
+>>> distance = a_u(3 * u.m, 20 * u.cm, 40 * u.cm)
+>>> print(distance)
+3.0 (+0.2, -0.4) m
+>>> print(distance.to(u.cm))
+300.0 (+20.0, -40.0) cm
+>>> print(distance / (2 * u.s))
+1.5 (+0.1, -0.2) m / s
+```
+
+The `.quantity`, `.plus_quantity`, and `.minus_quantity` properties expose Astropy `Quantity` objects. `pdf()` accepts unit-bearing coordinates and returns a density with inverse units; `cdf()` remains dimensionless. `UncertaintyArray.to()` converts all entries to a common target unit.
 
 ## Installation
 
