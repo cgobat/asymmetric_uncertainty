@@ -16,7 +16,7 @@ if __name__ == "__main__":
         download_url="https://github.com/cgobat/asymmetric_uncertainty/archive/main.zip",
         license="GPL-3.0",
         install_requires=[
-            "numpy>=2",
+            "numpy",
             "matplotlib",
             ]
         )

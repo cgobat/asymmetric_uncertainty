@@ -15,6 +15,10 @@ import unittest
 import numpy as np
 from asymmetric_uncertainty import a_u
 
+if hasattr(np, "trapz") and not hasattr(np, "trapezoid"):
+    np.trapezoid = np.trapz
+
+
 class TestCore(unittest.TestCase):
 
     def setUp(self): #We are only going to load the workbook once for each test case
