@@ -239,3 +239,41 @@ class TestCore(unittest.TestCase):
         self.assertIs(popped, second)
         self.assertEqual(len(array), 1)
         self.assertEqual(array, [first])
+
+    def test_Derived_State_After_Mutation(self):
+
+        value = a_u(3.0, 0.2, 0.4)
+        value.add_error(0.3, method="straight", inplace=True)
+
+        self.assertAlmostEqual(value.maximum, 3.5)
+        self.assertAlmostEqual(value.minimum, 2.3)
+
+        value.minus = 0.5
+        self.assertTrue(value.is_symmetric)
+
+        value.value = -3.0
+        self.assertEqual(value.sign, -1)
+        self.assertAlmostEqual(value.maximum, -2.5)
+        self.assertAlmostEqual(value.minimum, -3.5)
+
+    def test_UncertaintyArray_State_After_Mutation(self):
+
+        array = UncertaintyArray([a_u(1.0, 0.1, 0.2)])
+
+        array[0] = 2.0
+        self.assertIsInstance(array[0], a_u)
+        self.assertEqual(array.values, [2.0])
+        self.assertEqual(array.plus, [0.0])
+        self.assertEqual(array.minus, [0.0])
+
+        array.extend([3.0, a_u(4.0, 0.4, 0.5)])
+        self.assertEqual(array.values, [2.0, 3.0, 4.0])
+        self.assertEqual(array.plus, [0.0, 0.0, 0.4])
+        self.assertEqual(array.minus, [0.0, 0.0, 0.5])
+
+        array.reverse()
+        self.assertEqual(array.values, [4.0, 3.0, 2.0])
+
+        array.pop()
+        self.assertEqual(array.values, [4.0, 3.0])
+        self.assertEqual(array.shape, (2,))
