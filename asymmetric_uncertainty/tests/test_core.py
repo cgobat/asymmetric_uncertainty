@@ -55,7 +55,6 @@ class TestCore(unittest.TestCase):
     def test_Distribution(self):
 
         width_sum = self.testValue.plus + self.testValue.minus
-        trapezoid = getattr(np, "trapezoid", np.trapz)
 
         self.assertAlmostEqual(
             self.testValue.cdf(self.testValue.value),
@@ -76,10 +75,10 @@ class TestCore(unittest.TestCase):
         )
         x = np.concatenate((neg_x[:-1], pos_x))
         pdf = self.testValue.pdf(x)
-        self.assertAlmostEqual(trapezoid(pdf, x), 1.0, places=6)
+        self.assertAlmostEqual(np.trapezoid(pdf, x), 1.0, places=6)
 
         self.assertAlmostEqual(
-            trapezoid(self.testValue.pdf(neg_x), neg_x),
+            np.trapezoid(self.testValue.pdf(neg_x), neg_x),
             self.testValue.cdf(self.testValue.value),
             places=6,
         )
