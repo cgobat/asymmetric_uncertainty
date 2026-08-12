@@ -120,6 +120,17 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(result.plus, 0.0)
         self.assertAlmostEqual(result.minus, 0.0)
 
+    def test_Multiply_Negative(self):
+
+        result = self.testValue_a * -3
+        self.assertAlmostEqual(result.value, -30.0)
+        self.assertAlmostEqual(result.plus, 6.0)
+        self.assertAlmostEqual(result.minus, 3.0)
+
+        result = self.testValue_a * a_u(-3.0, 0.5, 1.0)
+        self.assertAlmostEqual(result.plus, np.sqrt(61.0))
+        self.assertAlmostEqual(result.minus, np.sqrt(109.0))
+
     def test_Divison_OverOne(self):
 
         testValue_c : a_u = self.testValue_a / self.testValue_one
@@ -140,6 +151,18 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(result.value, 0.0)
         self.assertAlmostEqual(result.plus, 0.0)
         self.assertAlmostEqual(result.minus, 0.0)
+
+    def test_Division_Negative(self):
+
+        result = self.testValue_a / -2
+        self.assertAlmostEqual(result.value, -5.0)
+        self.assertAlmostEqual(result.plus, 1.0)
+        self.assertAlmostEqual(result.minus, 0.5)
+
+        result = -20 / self.testValue_a
+        self.assertAlmostEqual(result.value, -2.0)
+        self.assertAlmostEqual(result.plus, 0.2)
+        self.assertAlmostEqual(result.minus, 0.4)
 
     def test_Divison_UnderOne(self):
         testValue_e : a_u = self.testValue_one/self.testValue_d

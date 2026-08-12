@@ -18,6 +18,21 @@ from math import erf
 
 np_erf = np.vectorize(erf, doc="Vectorized error function at x.")  # prevents need for SciPy dependency
 
+def _propagated_errors(operands, derivatives):
+    """Return first-order asymmetric errors for the supplied partial derivatives."""
+    pos_terms = []
+    neg_terms = []
+    for operand, derivative in zip(operands, derivatives):
+        if derivative >= 0:
+            pos_error = operand.plus
+            neg_error = operand.minus
+        else:
+            pos_error = operand.minus
+            neg_error = operand.plus
+        pos_terms.append((derivative*pos_error)**2)
+        neg_terms.append((derivative*neg_error)**2)
+    return np.sqrt(np.sum(pos_terms)), np.sqrt(np.sum(neg_terms))
+
 class a_u:
     """
     Class for representing and handling propagation of asymmetric uncertainties assuming a pseudo-Gaussian
@@ -213,8 +228,7 @@ class a_u:
             other = a_u(other,0,0)
         
         result = self.value * other.value
-        pos = np.sqrt((self.plus*other.value)**2 + (other.plus*self.value)**2)
-        neg = np.sqrt((self.minus*other.value)**2 + (other.minus*self.value)**2)
+        pos, neg = _propagated_errors((self, other), (other.value, self.value))
         #print("multiplied",self,"by",other,"=",a_u(result,pos,neg))
         return a_u(result,pos,neg)
     
@@ -225,8 +239,7 @@ class a_u:
             other = a_u(other,0,0)
         
         result = self.value * other.value
-        pos = np.sqrt((self.plus*other.value)**2 + (other.plus*self.value)**2)
-        neg = np.sqrt((self.minus*other.value)**2 + (other.minus*self.value)**2)
+        pos, neg = _propagated_errors((self, other), (other.value, self.value))
         #print("multiplied",other,"by",self,"=",a_u(result,pos,neg))        
         return a_u(result,pos,neg)
     
@@ -236,8 +249,7 @@ class a_u:
         else:
             other = a_u(other,0,0)
         result = self.value / other.value
-        pos = np.sqrt((self.plus/other.value)**2 + (self.value*other.minus/other.value**2)**2)
-        neg = np.sqrt((self.minus/other.value)**2 + (self.value*other.plus/other.value**2)**2)
+        pos, neg = _propagated_errors((self, other), (1/other.value, -self.value/other.value**2))
         #print("divided",self,"by",other,"=",a_u(result,pos,neg))        
         return a_u(result,pos,neg)
     
@@ -247,8 +259,7 @@ class a_u:
         else:
             other = a_u(other,0,0)
         result = other.value / self.value
-        pos = np.sqrt((other.plus/self.value)**2 + (other.value*self.minus/self.value**2)**2)
-        neg = np.sqrt((other.minus/self.value)**2 + (other.value*self.plus/self.value**2)**2)
+        pos, neg = _propagated_errors((other, self), (1/self.value, -other.value/self.value**2))
         #print("divided",other,"by",self,"=",a_u(result,pos,neg))        
         return a_u(result,pos,neg)
     
