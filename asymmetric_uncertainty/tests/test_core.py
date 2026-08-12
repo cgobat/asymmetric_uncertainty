@@ -190,3 +190,32 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(minus_two_power.value, reciprocal_squared.value)
         self.assertAlmostEqual(minus_two_power.plus, reciprocal_squared.plus)
         self.assertAlmostEqual(minus_two_power.minus, reciprocal_squared.minus)
+
+    def test_Pow_Uncertain_Exponent(self):
+
+        base = a_u(2.0, 0.1, 0.2)
+        exponent = a_u(2.0, 0.1, 0.1)
+        result = base**exponent
+
+        exponent_term = 4*np.log(2)*0.1
+        self.assertAlmostEqual(result.value, 4.0)
+        self.assertAlmostEqual(result.plus, np.sqrt(0.4**2 + exponent_term**2))
+        self.assertAlmostEqual(result.minus, np.sqrt(0.8**2 + exponent_term**2))
+
+        reverse_result = 2**exponent
+        self.assertAlmostEqual(reverse_result.value, 4.0)
+        self.assertAlmostEqual(reverse_result.plus, exponent_term)
+        self.assertAlmostEqual(reverse_result.minus, exponent_term)
+
+    def test_Pow_Negative_Base(self):
+
+        result = a_u(-2.0, 0.1, 0.2)**2
+        self.assertAlmostEqual(result.value, 4.0)
+        self.assertAlmostEqual(result.plus, 0.8)
+        self.assertAlmostEqual(result.minus, 0.4)
+
+        with self.assertRaises(ValueError):
+            a_u(-2.0, 0.1, 0.2)**0.5
+
+        with self.assertRaises(ValueError):
+            a_u(-2.0, 0.1, 0.2)**a_u(2.0, 0.1, 0.1)
