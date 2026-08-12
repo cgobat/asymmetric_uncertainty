@@ -13,7 +13,7 @@
 
 import unittest
 import numpy as np
-from asymmetric_uncertainty import a_u
+from asymmetric_uncertainty import UncertaintyArray, a_u
 
 if hasattr(np, "trapz") and not hasattr(np, "trapezoid"):
     np.trapezoid = np.trapz
@@ -223,3 +223,19 @@ class TestCore(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             a_u(-2.0, 0.1, 0.2)**a_u(2.0, 0.1, 0.1)
+
+    def test_UncertaintyArray_List_Storage(self):
+
+        first = a_u(1.0, 0.1, 0.2)
+        second = a_u(2.0, 0.2, 0.3)
+        array = UncertaintyArray([first, second])
+
+        self.assertEqual(list.__len__(array), 2)
+        self.assertEqual(array, [first, second])
+        self.assertEqual(array.index(second), 1)
+        self.assertIs(array.as_list, array)
+
+        popped = array.pop()
+        self.assertIs(popped, second)
+        self.assertEqual(len(array), 1)
+        self.assertEqual(array, [first])

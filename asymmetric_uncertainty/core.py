@@ -413,48 +413,47 @@ class UncertaintyArray(list):
                 self[i].plus
                 self[i].minus
             except AttributeError:
-                self[i] = a_u(self[i],0,0)
-                
-        self.as_numpy = np.array(self.as_list)
-        self.flattened = self.as_numpy.flatten()
-        self.shape = self.as_numpy.shape
-        self.ndim = self.as_numpy.ndim
+                list.__setitem__(self, i, a_u(self[i],0,0))
 
-        self.minus = [v.minus for v in self.as_list]
-        self.plus = [v.plus for v in self.as_list]
-        self.values = [v.value for v in self.as_list]
-    
-    def __init__(self,array=[]):
+        self.minus = [v.minus for v in self]
+        self.plus = [v.plus for v in self]
+        self.values = [v.value for v in self]
 
-        self.as_list = list(array)
+    def __init__(self, array=[]):
+
+        super().__init__(array)
         self.refresh()
 
-    def __len__(self):
-        return len(self.as_list)
+    @property
+    def as_list(self):
+        return self
 
-    def __iter__(self):
-        return iter(self.as_list)
+    @property
+    def as_numpy(self):
+        return np.asarray(self)
 
-    def __getitem__(self, key):
-        return self.as_list[key]
+    @property
+    def shape(self) -> tuple:
+        return self.as_numpy.shape
 
-    def __setitem__(self, key, val):
-        self.as_list[key] = val
+    @property
+    def ndim(self) -> int:
+        return self.as_numpy.ndim
+
+    def flatten(self):
+        return self.as_numpy.flatten()
 
     def __str__(self):
-        return str([str(entry) for entry in self.as_list])
+        return str([str(entry) for entry in self])
 
     def __repr__(self):
         return str(self)
 
-    def __contains__(self, item):
-        return item in self.as_list
-
-    def append(self,entry):
-        self.as_list.append(entry)
+    def append(self, entry):
+        super().append(entry)
         self.refresh()
-    
-    def pdf(self,x):
+
+    def pdf(self, x):
         return np.sum([entry.pdf(x) for entry in self], axis=0)
 
 def pos_errors(array):
