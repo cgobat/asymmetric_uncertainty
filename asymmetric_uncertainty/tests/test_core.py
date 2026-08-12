@@ -106,12 +106,40 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(testValue_c.plus, self.testValue_a.plus) 
         self.assertAlmostEqual(testValue_c.minus, self.testValue_a.minus)  
 
+    def test_Multiply_Zero(self):
+
+        zero_value = a_u(0.0, 0.1, 0.2)
+
+        result = zero_value * 2
+        self.assertAlmostEqual(result.value, 0.0)
+        self.assertAlmostEqual(result.plus, 0.2)
+        self.assertAlmostEqual(result.minus, 0.4)
+
+        result = self.testValue_a * 0
+        self.assertAlmostEqual(result.value, 0.0)
+        self.assertAlmostEqual(result.plus, 0.0)
+        self.assertAlmostEqual(result.minus, 0.0)
+
     def test_Divison_OverOne(self):
 
         testValue_c : a_u = self.testValue_a / self.testValue_one
 
         self.assertAlmostEqual(testValue_c.plus, self.testValue_a.plus) 
         self.assertAlmostEqual(testValue_c.minus, self.testValue_a.minus)  
+
+    def test_Division_Zero_Numerator(self):
+
+        zero_value = a_u(0.0, 0.1, 0.2)
+        result = zero_value / 2
+
+        self.assertAlmostEqual(result.value, 0.0)
+        self.assertAlmostEqual(result.plus, 0.05)
+        self.assertAlmostEqual(result.minus, 0.1)
+
+        result = 0 / self.testValue_a
+        self.assertAlmostEqual(result.value, 0.0)
+        self.assertAlmostEqual(result.plus, 0.0)
+        self.assertAlmostEqual(result.minus, 0.0)
 
     def test_Divison_UnderOne(self):
         testValue_e : a_u = self.testValue_one/self.testValue_d
