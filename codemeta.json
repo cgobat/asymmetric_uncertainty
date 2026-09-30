@@ -1,0 +1,26 @@
+{
+    "@context": "https://w3id.org/codemeta/3.0",
+    "type": "SoftwareSourceCode",
+    "author": [
+        {
+            "id": "https://orcid.org/0000-0003-1268-8845",
+            "type": "Person",
+            "familyName": "Gobat",
+            "givenName": "Caden"
+        }
+    ],
+    "codeRepository": "git+https://github.com/cgobat/asymmetric_uncertainty.git",
+    "contributor": [
+        {
+            "id": "https://orcid.org/0000-0002-1103-7082",
+            "type": "Person",
+            "familyName": "Moss",
+            "givenName": "Mike"
+        }
+    ],
+    "description": "Python package for representing and handling numeric quantities with asymmetric uncertainties.",
+    "license": "https://spdx.org/licenses/GPL-3.0",
+    "name": "Asymmetric Uncertainty",
+    "programmingLanguage": "Python 3",
+    "issueTracker": "https://github.com/cgobat/asymmetric_uncertainty/issues"
+}
