@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asymmetric_uncertainty"
+version = "0.2.10"
+authors = [
+    { name = "Caden Gobat", email = "cgobat@gwu.edu" },
+]
+description = "A package that provides a class for representing numeric quantities with asymmetric uncertainties."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+dependencies = [
+    "numpy",
+    "matplotlib",
+]
+
+[project.urls]
+Repository = "https://github.com/cgobat/asymmetric_uncertainty"
+Download = "https://github.com/cgobat/asymmetric_uncertainty/archive/main.zip"
+
+[tool.setuptools.packages.find]
+where = ["."]
+namespaces = false

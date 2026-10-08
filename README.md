@@ -23,7 +23,7 @@ Here we see how to create an instance of the class representing the example numb
 
 If you have a local installation of Git, you can install this package with a single command: run `pip install git+https://github.com/cgobat/asymmetric_uncertainty.git` to install the latest version.
 
-Otherwise, clone/download this repository, then (from a command line running within the associated directory) run `pip install .` or `python setup.py install`.
+Otherwise, clone/download this repository, then (from a command line running within the associated directory) run `python -m pip install .`.
 
 `asymmetric_uncertainty` should then be available as a module that you can import like any other.
 
