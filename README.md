@@ -29,7 +29,7 @@ Otherwise, clone/download this repository, then (from a command line running wit
 
 ## Documentation
 
-The majority of the documentation that has been written for this package thus far is contained in the [wiki](../../wiki) associated with this repository. Supplemental information, such as related works, the mathematical basis of this implementation, and further background reading, can be found in the [supporting materials](./supporting_matl.md) document.
+The documentation for this package is hosted on [ReadTheDocs](https://asymmetric-uncertainty.readthedocs.io/en/latest/). Supplemental information, such as related works, the mathematical basis of this implementation, and further background reading, can be found in the [supporting materials](./docs/supporting_material.rst) document.
 
 ## [Citing this project](./CITATION.bib)
 

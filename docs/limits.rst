@@ -22,4 +22,4 @@ a single prescribed representation.
    * - :math:`x_{-x}^{+0}` if :math:`x > 0`
      - :math:`x_{-0}^{+|x|}` if :math:`x < 0`
      - This is a poor representation of a true limit when the uncertainty is
-       already of order the nominal value.
+       of the same order as the nominal value.
