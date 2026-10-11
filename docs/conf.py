@@ -28,5 +28,17 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
+    "navbar_start": ["navbar-logo"],
+    "navbar_center": [],
+    "navbar_end": [
+        "theme-switcher",
+        "navbar-icon-links",
+    ],
+    "navbar_persistent": ["search-button-field"],
     "show_prev_next": False,
+}
+html_sidebars = {
+    "**": [
+        "sidebar-nav-bs",
+    ],
 }
