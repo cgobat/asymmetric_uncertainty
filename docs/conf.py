@@ -13,9 +13,16 @@ version = resolve_version("asymmetric_uncertainty")
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.intersphinx",
 ]
 
 autosectionlabel_prefix_document = True
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+}
+
 root_doc = "index"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
