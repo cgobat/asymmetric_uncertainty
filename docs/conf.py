@@ -34,7 +34,10 @@ html_theme_options = {
         "theme-switcher",
         "navbar-icon-links",
     ],
-    "navbar_persistent": ["search-button-field"],
+    "navbar_persistent": [
+        "search-button",
+    ],
+    "github_url": "https://github.com/cgobat/asymmetric_uncertainty",
     "show_prev_next": False,
 }
 html_sidebars = {
