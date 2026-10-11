@@ -33,6 +33,6 @@ The documentation for this package is hosted on [ReadTheDocs](https://asymmetric
 
 ## [Citing this project](./CITATION.bib)
 
-If you make use of this package in your own work, please cite it by referencing its entry in ASCL, the Astrophysics Source Code Library: [ascl:2208.005](http://ascl.net/2208.005). Citation information can also be exported from ADS ([2022ascl.soft08005G](https://ui.adsabs.harvard.edu/abs/2022ascl.soft08005G/exportcitation)) or the sidebar of this repository.
+If you make use of this package in your own work, please cite it by referencing its entry in ASCL, the Astrophysics Source Code Library: [ascl:2208.005](http://ascl.net/2208.005). Citation information can also be exported from ADS/SciX ([2022ascl.soft08005G](https://scixplorer.org/abs/2022ascl.soft08005G/exportcitation)) or the sidebar of this repository.
 
 [^1]: Definitions and conventions for what this means vary. Common uses/interpretations include standard deviation, standard deviation divided by the square root of the number of samples (often called standard error), 90% confidence interval, etc. As long as usage is consistent and intentions are clear, any of these are valid.

@@ -17,13 +17,13 @@ Supporting material and further reading
 .. rubric:: References
 
 .. [1] R. L. C. Starling et al. (2008), *ApJ* **672**(1), 433.
-       `bibcode:2008ApJ...672..433S <https://ui.adsabs.harvard.edu/abs/2008ApJ...672..433S/abstract>`_.
+       `bibcode:2008ApJ...672..433S <https://scixplorer.org/abs/2008ApJ...672..433S/abstract>`_.
 
 .. [2] R. Barlow (2004), arXiv:physics/0406120.
-       `bibcode:2004physics...6120B <https://ui.adsabs.harvard.edu/abs/2004physics...6120B/abstract>`_.
+       `bibcode:2004physics...6120B <https://scixplorer.org/abs/2004physics...6120B/abstract>`_.
 
 .. [3] C. Gobat et al. (2023), *MNRAS* **523**(1), 775.
-       `bibcode:2023MNRAS.523..775G <https://ui.adsabs.harvard.edu/abs/2023MNRAS.523..775G/abstract>`_.
+       `bibcode:2023MNRAS.523..775G <https://scixplorer.org/abs/2023MNRAS.523..775G/abstract>`_.
 
 .. [4] C. Gobat et al. (2022), *RNAAS* **6**(8), 163.
-       `bibcode:2022RNAAS...6..163G <https://ui.adsabs.harvard.edu/abs/2022RNAAS...6..163G/abstract>`_.
+       `bibcode:2022RNAAS...6..163G <https://scixplorer.org/abs/2022RNAAS...6..163G/abstract>`_.
