@@ -69,6 +69,25 @@ class TestCore(unittest.TestCase):
 
         self.assertAlmostEqual(self.testValue.sqrt().value, np.sqrt(3.0)) 
 
+    def test_Distribution_Moments(self):
+
+        mean, variance, third = self._distribution_moments(self.testValue)
+
+        self.assertAlmostEqual(self.testValue.mean, mean)
+        self.assertAlmostEqual(self.testValue.variance, variance)
+        self.assertAlmostEqual(self.testValue.std, np.sqrt(variance))
+        self.assertAlmostEqual(self.testValue.skewness, third/variance**1.5)
+
+        symmetric = a_u(3.0, 0.4, 0.4)
+        self.assertAlmostEqual(symmetric.mean, symmetric.value)
+        self.assertAlmostEqual(symmetric.variance, 0.4**2)
+        self.assertAlmostEqual(symmetric.std, 0.4)
+        self.assertAlmostEqual(symmetric.skewness, 0.0)
+
+        exact = a_u(3.0)
+        self.assertEqual(exact.variance, 0.0)
+        self.assertTrue(np.isnan(exact.skewness))
+
     def test_Distribution(self):
 
         width_sum = self.testValue.plus + self.testValue.minus

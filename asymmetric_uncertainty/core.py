@@ -20,31 +20,17 @@ np_erf = np.vectorize(erf, doc="Vectorized error function at x.")  # prevents ne
 
 _SPLIT_NORMAL_MEAN_FACTOR = np.sqrt(2/np.pi)
 _SPLIT_NORMAL_VARIANCE_FACTOR = 3/4 - 2/np.pi
-_SPLIT_NORMAL_SKEW_FACTOR = 6/np.pi - 2
+_SPLIT_NORMAL_THIRD_MOMENT_FACTOR = 6/np.pi - 2
 
 
-def _split_normal_moments(value, plus, minus):
-    """Return the mean, variance, and third central moment of a split normal."""
-    width_sum = plus + minus
-    width_diff = plus - minus
-    mean = value + _SPLIT_NORMAL_MEAN_FACTOR*width_diff
-    variance = width_sum**2/4 + _SPLIT_NORMAL_VARIANCE_FACTOR*width_diff**2
-    third_moment = (
-        _SPLIT_NORMAL_MEAN_FACTOR
-        * width_diff
-        * (variance + _SPLIT_NORMAL_SKEW_FACTOR*width_diff**2)
-    )
-    return mean, variance, third_moment
-
-
-def _split_normal_from_moments(mean, variance, third_moment):
-    """Return split-normal ``(mode, plus, minus)`` matching three moments."""
+def _split_normal_shape_from_moments(variance, third_moment):
+    """Return split-normal ``(plus, minus)`` widths matching two central moments."""
     if variance < 0:
         raise ValueError("variance must be non-negative")
     if variance == 0:
         if third_moment != 0:
             raise ValueError("a zero-variance distribution cannot have non-zero skew")
-        return mean, 0.0, 0.0
+        return 0.0, 0.0
 
     max_width_diff = np.sqrt(variance/(1 - 2/np.pi))
 
@@ -52,7 +38,7 @@ def _split_normal_from_moments(mean, variance, third_moment):
         return (
             _SPLIT_NORMAL_MEAN_FACTOR
             * width_diff
-            * (variance + _SPLIT_NORMAL_SKEW_FACTOR*width_diff**2)
+            * (variance + _SPLIT_NORMAL_THIRD_MOMENT_FACTOR*width_diff**2)
         )
 
     max_third_moment = moment_for_width_diff(max_width_diff)
@@ -79,19 +65,7 @@ def _split_normal_from_moments(mean, variance, third_moment):
     )
     minus = max(0.0, (width_sum - width_diff)/2)
     plus = max(0.0, (width_sum + width_diff)/2)
-    value = mean - _SPLIT_NORMAL_MEAN_FACTOR*width_diff
-    return value, plus, minus
-
-
-def _combine_independent(left, right, right_sign):
-    """Moment-match the sum of two independent split-normal variables."""
-    left_mean, left_variance, left_third = _split_normal_moments(*left.items())
-    right_mean, right_variance, right_third = _split_normal_moments(*right.items())
-    return _split_normal_from_moments(
-        left_mean + right_sign*right_mean,
-        left_variance + right_variance,
-        left_third + right_sign*right_third,
-    )
+    return plus, minus
 
 
 def _propagated_errors(operands, derivatives):
@@ -171,6 +145,47 @@ class a_u:
     @property
     def is_symmetric(self):
         return np.isclose(self.plus, self.minus)
+
+    @property
+    def mean(self):
+        """Mean of the represented split-normal distribution."""
+        return self.value + _SPLIT_NORMAL_MEAN_FACTOR*(self.plus - self.minus)
+
+    @property
+    def variance(self):
+        """Variance of the represented split-normal distribution."""
+        width_sum = self.plus + self.minus
+        width_diff = self.plus - self.minus
+        return (width_sum**2)/4 + _SPLIT_NORMAL_VARIANCE_FACTOR*width_diff**2
+
+    @property
+    def std(self):
+        """Standard deviation of the represented split-normal distribution."""
+        return np.sqrt(self.variance)
+
+    @property
+    def _third_central_moment(self):
+        width_diff = self.plus - self.minus
+        return (
+            _SPLIT_NORMAL_MEAN_FACTOR
+            * width_diff
+            * (self.variance + _SPLIT_NORMAL_THIRD_MOMENT_FACTOR*width_diff**2)
+        )
+
+    @property
+    def skewness(self):
+        """Standardized third central moment of the represented distribution."""
+        variance = self.variance
+        if variance == 0:
+            return np.nan
+        return self._third_central_moment/variance**1.5
+
+    @classmethod
+    def _from_moments(cls, mean, variance, third_moment):
+        """Construct a split normal matching the supplied first three moments."""
+        plus, minus = _split_normal_shape_from_moments(variance, third_moment)
+        value = mean - _SPLIT_NORMAL_MEAN_FACTOR*(plus - minus)
+        return cls(value, plus, minus)
 
     def __str__(self):
         return f"{self}"
@@ -272,7 +287,11 @@ class a_u:
     def __add__(self,other):
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
-        return a_u(*_combine_independent(self, other, 1))
+        return a_u._from_moments(
+            self.mean + other.mean,
+            self.variance + other.variance,
+            self._third_central_moment + other._third_central_moment,
+        )
     
     def __radd__(self,other):
         return self + other
@@ -280,12 +299,12 @@ class a_u:
     def __sub__(self,other):
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
-        return a_u(*_combine_independent(self, other, -1))
+        return self + (-other)
     
     def __rsub__(self,other):
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
-        return a_u(*_combine_independent(other, self, -1))
+        return other - self
     
     def __mul__(self,other):
         if isinstance(other,type(self)):

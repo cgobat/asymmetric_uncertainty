@@ -34,6 +34,20 @@ The principal scalar attributes are:
    ``True`` when ``plus`` and ``minus`` are numerically equal within
    :func:`numpy.isclose` tolerance.
 
+``mean``
+   Mean of the represented split-normal distribution. For asymmetric errors,
+   this generally differs from ``value``, which is the mode.
+
+``variance``
+   Variance of the represented split-normal distribution.
+
+``std``
+   Standard deviation of the represented split-normal distribution.
+
+``skewness``
+   Standardized third central moment of the represented split-normal
+   distribution. This is ``nan`` for an exact, zero-variance value.
+
 ``UncertaintyArray``
 --------------------
 
