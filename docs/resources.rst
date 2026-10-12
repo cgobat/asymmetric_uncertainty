@@ -8,6 +8,7 @@ Additional documentation
    :maxdepth: 1
 
    supporting_material
+   related_software
    limits
 
 External resources
