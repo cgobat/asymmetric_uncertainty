@@ -220,9 +220,16 @@ class a_u:
         """
         x_arr = np.asanyarray(x).astype(float)
         width_sum = self.plus + self.minus
+        lower_cdf = (
+            0.0 if self.minus == 0
+            else lambda x: self.minus/width_sum * (1 + np_erf((x-self.value)/(self.minus*np.sqrt(2))))
+        )
+        upper_cdf = (
+            1.0 if self.plus == 0
+            else lambda x: (self.minus + self.plus*np_erf((x-self.value)/(self.plus*np.sqrt(2))))/width_sum
+        )
         cdf_arr = np.piecewise(x_arr, [x_arr<self.value, x_arr>=self.value],
-                               [lambda x: self.minus/width_sum * (1 + np_erf((x-self.value)/(self.minus*np.sqrt(2)))),
-                                lambda x: (self.minus + self.plus*np_erf((x-self.value)/(self.plus*np.sqrt(2))))/width_sum])
+                               [lower_cdf, upper_cdf])
         return cdf_arr.item() if np.isscalar(x) else cdf_arr
     
     def ppf(self, q):

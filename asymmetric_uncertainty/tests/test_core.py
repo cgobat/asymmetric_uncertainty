@@ -132,6 +132,22 @@ class TestCore(unittest.TestCase):
             places=6,
         )
 
+        exact = a_u(2.0)
+        np.testing.assert_array_equal(exact.cdf([1.0, 2.0, 3.0]), [0.0, 1.0, 1.0])
+
+        right_sided = a_u(2.0, 1.0, 0.0)
+        left_sided = a_u(2.0, 0.0, 1.0)
+        quantiles = np.array([0.1, 0.5, 0.9])
+        for one_sided in (right_sided, left_sided):
+            np.testing.assert_allclose(
+                one_sided.cdf(one_sided.ppf(quantiles)),
+                quantiles,
+                rtol=0,
+                atol=1e-12,
+            )
+        self.assertEqual(right_sided.cdf(right_sided.ppf(0.0)), 0.0)
+        self.assertEqual(left_sided.cdf(left_sided.ppf(1.0)), 1.0)
+
     def test_PPF(self):
 
         mode_probability = self.testValue.minus/(self.testValue.plus + self.testValue.minus)
