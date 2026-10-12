@@ -21,6 +21,19 @@ if hasattr(np, "trapz") and not hasattr(np, "trapezoid"):
 
 class TestCore(unittest.TestCase):
 
+    @staticmethod
+    def _distribution_moments(value):
+        width_sum = value.plus + value.minus
+        width_diff = value.plus - value.minus
+        mean = value.value + np.sqrt(2/np.pi)*width_diff
+        variance = width_sum**2/4 + (3/4 - 2/np.pi)*width_diff**2
+        third = (
+            np.sqrt(2/np.pi)
+            * width_diff
+            * (variance + (6/np.pi - 2)*width_diff**2)
+        )
+        return mean, variance, third
+
     def setUp(self): #We are only going to load the workbook once for each test case
         self.testValue = a_u(3.0, 0.2, 0.4)
 
@@ -56,6 +69,25 @@ class TestCore(unittest.TestCase):
 
         self.assertAlmostEqual(self.testValue.sqrt().value, np.sqrt(3.0)) 
 
+    def test_Distribution_Moments(self):
+
+        mean, variance, third = self._distribution_moments(self.testValue)
+
+        self.assertAlmostEqual(self.testValue.mean, mean)
+        self.assertAlmostEqual(self.testValue.variance, variance)
+        self.assertAlmostEqual(self.testValue.std, np.sqrt(variance))
+        self.assertAlmostEqual(self.testValue.skewness, third/variance**1.5)
+
+        symmetric = a_u(3.0, 0.4, 0.4)
+        self.assertAlmostEqual(symmetric.mean, symmetric.value)
+        self.assertAlmostEqual(symmetric.variance, 0.4**2)
+        self.assertAlmostEqual(symmetric.std, 0.4)
+        self.assertAlmostEqual(symmetric.skewness, 0.0)
+
+        exact = a_u(3.0)
+        self.assertEqual(exact.variance, 0.0)
+        self.assertTrue(np.isnan(exact.skewness))
+
     def test_Distribution(self):
 
         width_sum = self.testValue.plus + self.testValue.minus
@@ -79,7 +111,19 @@ class TestCore(unittest.TestCase):
         )
         x = np.concatenate((neg_x[:-1], pos_x))
         pdf = self.testValue.pdf(x)
-        self.assertAlmostEqual(np.trapezoid(pdf, x), 1.0, places=6)
+        norm = np.trapezoid(pdf, x)
+        self.assertAlmostEqual(norm, 1.0, places=6)
+
+        numerical_mean = np.trapezoid(x*pdf, x)/norm
+        numerical_variance = np.trapezoid((x - numerical_mean)**2*pdf, x)/norm
+        numerical_third = np.trapezoid((x - numerical_mean)**3*pdf, x)/norm
+        self.assertAlmostEqual(self.testValue.mean, numerical_mean, places=8)
+        self.assertAlmostEqual(self.testValue.variance, numerical_variance, places=8)
+        self.assertAlmostEqual(
+            self.testValue.skewness,
+            numerical_third/numerical_variance**1.5,
+            places=8,
+        )
 
         self.assertAlmostEqual(
             np.trapezoid(self.testValue.pdf(neg_x), neg_x),
@@ -91,16 +135,62 @@ class TestCore(unittest.TestCase):
 
         testValue_c : a_u = self.testValue_a + self.testValue_b
 
-        self.assertAlmostEqual(testValue_c.plus, np.sqrt(2)) 
-        self.assertAlmostEqual(testValue_c.minus, np.sqrt(8))       
+        source_mean, source_variance, source_third = self._distribution_moments(self.testValue_a)
+        other_mean, other_variance, other_third = self._distribution_moments(self.testValue_b)
+        result_mean, result_variance, result_third = self._distribution_moments(testValue_c)
 
+        self.assertAlmostEqual(result_mean, source_mean + other_mean)
+        self.assertAlmostEqual(result_variance, source_variance + other_variance)
+        self.assertAlmostEqual(result_third, source_third + other_third)
+        self.assertGreater(testValue_c.plus/testValue_c.minus,
+                           self.testValue_a.plus/self.testValue_a.minus)
+
+        shifted = self.testValue_a + 2
+        self.assertAlmostEqual(shifted.value, 12.0)
+        self.assertAlmostEqual(shifted.plus, self.testValue_a.plus)
+        self.assertAlmostEqual(shifted.minus, self.testValue_a.minus)
+
+        extreme = a_u(10.0, 1e-12, 2.0)
+        shifted = extreme + 2
+        self.assertEqual(shifted.value, 12.0)
+        self.assertEqual(shifted.plus, extreme.plus)
+        self.assertEqual(shifted.minus, extreme.minus)
+
+        shifted = a_u(2.0) + extreme
+        self.assertEqual(shifted.value, 12.0)
+        self.assertEqual(shifted.plus, extreme.plus)
+        self.assertEqual(shifted.minus, extreme.minus)
+
+    def test_Addition_Associativity(self):
+
+        first = a_u(1.0, 0.1, 0.4)
+        second = a_u(2.0, 0.3, 0.2)
+        third = a_u(-0.5, 0.2, 0.5)
+
+        left = (first + second) + third
+        right = first + (second + third)
+
+        self.assertAlmostEqual(left.value, right.value)
+        self.assertAlmostEqual(left.plus, right.plus)
+        self.assertAlmostEqual(left.minus, right.minus)
 
     def test_Subtraction(self):
 
         testValue_c : a_u = self.testValue_a - self.testValue_b
 
-        self.assertAlmostEqual(testValue_c.plus, np.sqrt(5)) 
-        self.assertAlmostEqual(testValue_c.minus, np.sqrt(5))  
+        source_mean, source_variance, source_third = self._distribution_moments(self.testValue_a)
+        other_mean, other_variance, other_third = self._distribution_moments(self.testValue_b)
+        result_mean, result_variance, result_third = self._distribution_moments(testValue_c)
+
+        self.assertAlmostEqual(result_mean, source_mean - other_mean)
+        self.assertAlmostEqual(result_variance, source_variance + other_variance)
+        self.assertAlmostEqual(result_third, source_third - other_third)
+        self.assertAlmostEqual(testValue_c.plus, testValue_c.minus)
+
+        shifted = 2 - self.testValue_a
+        self.assertAlmostEqual(shifted.value, -8.0)
+        self.assertAlmostEqual(shifted.plus, self.testValue_a.minus)
+        self.assertAlmostEqual(shifted.minus, self.testValue_a.plus)
 
 
     def test_Multiply(self):

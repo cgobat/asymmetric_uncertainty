@@ -5,6 +5,25 @@ In addition to the methods and attributes listed in the :doc:`api`, the
 :class:`asymmetric_uncertainty.a_u` class provides several convenience
 features.
 
+Propagation model
+-----------------
+
+An ``a_u`` value represents a jointly normalized split-normal distribution.
+The stored ``value`` is the mode of that distribution, and ``minus`` and
+``plus`` are the Gaussian widths below and above the mode.
+
+Addition and subtraction treat the two operands as independent random
+variables. Their exact convolution is generally not another split normal, so
+the result is approximated by a split normal with the same mean, variance, and
+third central moment as the convolution. Consequently, the returned ``value``
+need not equal the arithmetic sum or difference of the two input modes when the
+operands are asymmetric.
+
+Multiplication, division, powers, and the logarithmic/exponential helpers use
+first-order derivative propagation about the nominal values instead. These
+operations therefore propagate the quoted local uncertainty rather than
+attempting to reproduce the full transformed probability distribution.
+
 Intelligent display formatting
 ------------------------------
 
