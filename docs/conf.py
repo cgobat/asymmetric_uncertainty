@@ -37,6 +37,7 @@ html_theme_options = {
     "navbar_persistent": [
         "search-button",
     ],
+    "navbar_align": "right",
     "github_url": "https://github.com/cgobat/asymmetric_uncertainty",
     "show_prev_next": False,
 }
