@@ -17,6 +17,7 @@ extensions = [
 ]
 
 autosectionlabel_prefix_document = True
+trim_footnote_reference_space = True
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
