@@ -25,21 +25,22 @@ propagation strategies.
      - Propagation approach
      - Main difference from ``asymmetric_uncertainty``
    * - `asymmetric_uncertainties <https://github.com/muryelgp/asymmetric_uncertainties>`_
-     - Barlow's Linear Variable Width Gaussian, with uncertainties specified at
-       a chosen confidence level.
+     - Barlow's Linear Variable Width Gaussian [2]_, with uncertainties specified
+       at a chosen confidence level.
      - Monte Carlo sampling for arithmetic and user-defined functions.
      - Uses a Barlow variable-width model and numerical sampling rather than a
        split-normal object with primarily analytic/local propagation.
    * - `add_asym <https://github.com/anisotropela/add_asym>`_
-     - Linear or quadratic transformed-Gaussian models following Barlow (2003).
+     - Linear or quadratic transformed-Gaussian models following Barlow (2003). [1]_
      - Deterministic moment-based combination of independent asymmetric errors.
      - Specialized for addition rather than providing a general numeric type or
        arbitrary arithmetic. Its treatment of moments is the closest conceptual
        relative of this package's addition/subtraction model.
    * - `SOAD <https://github.com/kiyami/soad>`_
-     - Barlow Variable Gaussian representation.
+     - Barlow Variable Gaussian representation. [2]_
      - Monte Carlo propagation through arithmetic operations, with fitted output
-       distributions and confidence-level utilities.
+       distributions and confidence-level utilities. The package and methodology
+       are described by Erdim and Hüdaverdi (2019). [3]_
      - Keeps sampled distributions as the basis for propagation and includes
        plotting/confidence-level tools rather than using local analytic error
        propagation for nonlinear operations.
@@ -52,8 +53,7 @@ propagation strategies.
        error budgets.
    * - `AsymmetricErrorsPy <https://github.com/igvgit/AsymmetricErrorsPy>`_
      - A large collection of probability-distribution and log-likelihood models
-       accompanying `Barlow, Brazzale, and Volobouev (2026)
-       <https://doi.org/10.1016/j.nima.2025.170857>`_.
+       accompanying Barlow, Brazzale, and Volobouev (2026). [4]_
      - Numerical routines for combining errors and measurements, backed by the
        C++ `AsymmetricErrors <https://github.com/igvgit/AsymmetricErrors>`_
        library.
@@ -82,7 +82,23 @@ quantities, but it does not represent separate upper and lower uncertainties.
 
 The moment-matching approach used here for independent addition and subtraction
 is closest in motivation to ``add_asym`` and Barlow's work on combining
-asymmetric errors. The implementation remains different: the result is
+asymmetric errors. [1]_ The implementation remains different: the result is
 projected back into the split-normal family already used by
 ``asymmetric_uncertainty`` rather than adopting Barlow's transformed-Gaussian or
 variable-width-Gaussian parameterizations.
+
+.. rubric:: References
+
+.. [1] R. Barlow (2003), *Asymmetric Systematic Errors*, arXiv:physics/0306138.
+       `bibcode:2003physics...6138B <https://scixplorer.org/abs/2003physics...6138B/abstract>`_.
+
+.. [2] R. Barlow (2004), *Asymmetric Statistical Errors*, arXiv:physics/0406120.
+       `bibcode:2004physics...6120B <https://scixplorer.org/abs/2004physics...6120B/abstract>`_.
+
+.. [3] M. K. Erdim and M. Hüdaverdi (2019), *AIP Conference Proceedings*
+       **2178**, 030023.
+       `bibcode:2019AIPC.2178c0023E <https://scixplorer.org/abs/2019AIPC.2178c0023E/abstract>`_.
+
+.. [4] R. Barlow, A. R. Brazzale, and I. Volobouev (2026), *Nuclear Instruments
+       and Methods in Physics Research A* **1082**, 170857.
+       `bibcode:2026NIMPA108270857B <https://scixplorer.org/abs/2026NIMPA108270857B/abstract>`_.
