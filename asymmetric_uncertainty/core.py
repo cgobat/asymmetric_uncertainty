@@ -200,7 +200,7 @@ class a_u:
     
     def _repr_latex_(self, float_fmt="f"):
         if np.isclose(self.plus, self.minus):
-            return f"${format(self.value, float_fmt)} \pm {format(self.plus, float_fmt)}$"
+            return f"${format(self.value, float_fmt)}" + r" \pm " + f"{format(self.plus, float_fmt)}$"
         else:
             return "$%s^{+%s}_{-%s}$" % tuple(format(x, float_fmt) for x in self.items())
     
