@@ -11,6 +11,7 @@
     LICENSE file distributed with this program for more details.
 """
 
+from math import erf
 import unittest
 import numpy as np
 from asymmetric_uncertainty import UncertaintyArray, a_u
@@ -130,6 +131,102 @@ class TestCore(unittest.TestCase):
             self.testValue.cdf(self.testValue.value),
             places=6,
         )
+
+        exact = a_u(2.0)
+        np.testing.assert_array_equal(exact.cdf([1.0, 2.0, 3.0]), [0.0, 1.0, 1.0])
+
+        right_sided = a_u(2.0, 1.0, 0.0)
+        left_sided = a_u(2.0, 0.0, 1.0)
+        quantiles = np.array([0.1, 0.5, 0.9])
+        for one_sided in (right_sided, left_sided):
+            np.testing.assert_allclose(
+                one_sided.cdf(one_sided.ppf(quantiles)),
+                quantiles,
+                rtol=0,
+                atol=1e-12,
+            )
+        self.assertEqual(right_sided.cdf(right_sided.ppf(0.0)), 0.0)
+        self.assertEqual(left_sided.cdf(left_sided.ppf(1.0)), 1.0)
+
+    def test_PPF(self):
+
+        mode_probability = self.testValue.minus/(self.testValue.plus + self.testValue.minus)
+        quantiles = np.array([0.01, 0.1, mode_probability, 0.9, 0.99])
+        values = self.testValue.ppf(quantiles)
+
+        np.testing.assert_allclose(self.testValue.cdf(values), quantiles, rtol=0, atol=1e-12)
+        self.assertAlmostEqual(self.testValue.ppf(mode_probability), self.testValue.value)
+        self.assertEqual(self.testValue.ppf(0), -np.inf)
+        self.assertEqual(self.testValue.ppf(1), np.inf)
+        self.assertTrue(np.isnan(self.testValue.ppf(np.nan)))
+
+        with self.assertRaises(ValueError):
+            self.testValue.ppf(-0.1)
+        with self.assertRaises(ValueError):
+            self.testValue.ppf(1.1)
+
+        exact = a_u(2.0)
+        self.assertEqual(exact.ppf(0.5), 2.0)
+
+        near_one = np.nextafter(1.0, 0.0)
+        upper_tail = a_u(0.0, 3.0, 1.0)
+        self.assertTrue(np.isfinite(upper_tail.ppf(near_one)))
+
+    def test_Random_Sampling(self):
+
+        samples = self.testValue.rvs(size=50000, rng=12345)
+        repeated = self.testValue.rvs(size=50000, rng=12345)
+
+        np.testing.assert_array_equal(samples, repeated)
+        self.assertEqual(samples.shape, (50000,))
+        self.assertAlmostEqual(np.mean(samples), self.testValue.mean, delta=0.01)
+        self.assertAlmostEqual(
+            np.mean(samples < self.testValue.value),
+            self.testValue.minus/(self.testValue.plus + self.testValue.minus),
+            delta=0.01,
+        )
+
+        exact = a_u(2.0)
+        np.testing.assert_array_equal(exact.rvs(size=3, rng=123), np.full(3, 2.0))
+        self.assertEqual(exact.rvs(rng=123), 2.0)
+
+    def test_Intervals(self):
+
+        self.assertEqual(self.testValue.interval(), (2.6, 3.2))
+        self.assertEqual(self.testValue.interval(n_sigma=2), (2.2, 3.4))
+
+        one_sigma_confidence = erf(1/np.sqrt(2))
+        confidence_interval = self.testValue.interval(confidence=one_sigma_confidence)
+        np.testing.assert_allclose(confidence_interval, self.testValue.interval(), rtol=0, atol=1e-12)
+
+        equal_tail = self.testValue.equal_tail_interval(one_sigma_confidence)
+        lower_probability = (1 - one_sigma_confidence)/2
+        self.assertAlmostEqual(self.testValue.cdf(equal_tail[0]), lower_probability)
+        self.assertAlmostEqual(self.testValue.cdf(equal_tail[1]), 1 - lower_probability)
+        self.assertNotEqual(equal_tail, self.testValue.interval())
+
+        symmetric = a_u(3.0, 0.4, 0.4)
+        np.testing.assert_allclose(
+            symmetric.equal_tail_interval(one_sigma_confidence),
+            symmetric.interval(),
+            rtol=0,
+            atol=1e-12,
+        )
+
+        near_one = np.nextafter(1.0, 0.0)
+        self.assertTrue(np.all(np.isfinite(self.testValue.interval(confidence=near_one))))
+        self.assertTrue(
+            np.all(np.isfinite(self.testValue.equal_tail_interval(near_one)))
+        )
+
+        with self.assertRaises(ValueError):
+            self.testValue.interval(n_sigma=1, confidence=0.68)
+        with self.assertRaises(ValueError):
+            self.testValue.interval(n_sigma=-1)
+        with self.assertRaises(ValueError):
+            self.testValue.interval(confidence=1)
+        with self.assertRaises(ValueError):
+            self.testValue.equal_tail_interval(0)
 
     def test_Addition(self):
 

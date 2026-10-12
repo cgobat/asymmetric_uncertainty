@@ -15,8 +15,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 from math import erf
+from statistics import NormalDist
 
 np_erf = np.vectorize(erf, doc="Vectorized error function at x.")  # prevents need for SciPy dependency
+np_ppf = np.vectorize(NormalDist().inv_cdf, otypes=[float])
 
 _SPLIT_NORMAL_MEAN_FACTOR = np.sqrt(2/np.pi)
 _SPLIT_NORMAL_VARIANCE_FACTOR = 3/4 - 2/np.pi
@@ -218,11 +220,110 @@ class a_u:
         """
         x_arr = np.asanyarray(x).astype(float)
         width_sum = self.plus + self.minus
+        lower_cdf = (
+            0.0 if self.minus == 0
+            else lambda x: self.minus/width_sum * (1 + np_erf((x-self.value)/(self.minus*np.sqrt(2))))
+        )
+        upper_cdf = (
+            1.0 if self.plus == 0
+            else lambda x: (self.minus + self.plus*np_erf((x-self.value)/(self.plus*np.sqrt(2))))/width_sum
+        )
         cdf_arr = np.piecewise(x_arr, [x_arr<self.value, x_arr>=self.value],
-                               [lambda x: self.minus/width_sum * (1 + np_erf((x-self.value)/(self.minus*np.sqrt(2)))),
-                                lambda x: (self.minus + self.plus*np_erf((x-self.value)/(self.plus*np.sqrt(2))))/width_sum])
+                               [lower_cdf, upper_cdf])
         return cdf_arr.item() if np.isscalar(x) else cdf_arr
     
+    def ppf(self, q):
+        """Return quantiles of the represented split-normal distribution."""
+        q_arr = np.asanyarray(q).astype(float)
+        finite = np.isfinite(q_arr)
+        if np.any((q_arr[finite] < 0) | (q_arr[finite] > 1)):
+            raise ValueError("quantiles must lie between 0 and 1")
+
+        result = np.full(q_arr.shape, np.nan, dtype=float)
+        width_sum = self.plus + self.minus
+        if width_sum == 0:
+            result[finite] = self.value
+            return result.item() if np.isscalar(q) else result
+
+        lower_endpoint = finite & (q_arr == 0)
+        upper_endpoint = finite & (q_arr == 1)
+        result[lower_endpoint] = self.value if self.minus == 0 else -np.inf
+        result[upper_endpoint] = self.value if self.plus == 0 else np.inf
+
+        interior = finite & (q_arr > 0) & (q_arr < 1)
+        mode_probability = self.minus/width_sum
+        lower = interior & (q_arr < mode_probability)
+        upper = interior & ~lower
+
+        if np.any(lower):
+            probability = q_arr[lower]*width_sum/(2*self.minus)
+            result[lower] = self.value + self.minus*np_ppf(probability)
+        if np.any(upper):
+            tail_probability = (1 - q_arr[upper])*width_sum/(2*self.plus)
+            result[upper] = self.value - self.plus*np_ppf(tail_probability)
+
+        return result.item() if np.isscalar(q) else result
+
+    def rvs(self, size=None, rng=None):
+        """Draw random values from the represented split-normal distribution."""
+        if isinstance(rng, np.random.Generator):
+            generator = rng
+        else:
+            generator = np.random.default_rng(rng)
+
+        width_sum = self.plus + self.minus
+        if width_sum == 0:
+            if size is None:
+                return self.value
+            return np.full(size, self.value, dtype=float)
+
+        negative_side = generator.random(size=size) < self.minus/width_sum
+        magnitude = np.abs(generator.standard_normal(size=size))
+        samples = np.where(
+            negative_side,
+            self.value - self.minus*magnitude,
+            self.value + self.plus*magnitude,
+        )
+        return samples.item() if size is None else samples
+
+    def interval(self, n_sigma=None, confidence=None):
+        """Return a mode-centered interval in units of the two Gaussian widths."""
+        if n_sigma is not None and confidence is not None:
+            raise ValueError("specify either n_sigma or confidence, not both")
+
+        if confidence is not None:
+            confidence = float(confidence)
+            if not 0 < confidence < 1:
+                raise ValueError("confidence must lie strictly between 0 and 1")
+            n_sigma = -NormalDist().inv_cdf((1 - confidence)/2)
+        elif n_sigma is None:
+            n_sigma = 1.0
+
+        n_sigma = float(n_sigma)
+        if not np.isfinite(n_sigma) or n_sigma < 0:
+            raise ValueError("n_sigma must be a finite non-negative number")
+
+        return (
+            self.value - n_sigma*self.minus,
+            self.value + n_sigma*self.plus,
+        )
+
+    def equal_tail_interval(self, confidence=None):
+        """
+        Return an equal-tail interval containing the requested probability mass.
+        The default confidence is the conventional one-sigma Gaussian probability.
+        """
+        if confidence is None:
+            confidence = erf(1/np.sqrt(2))
+        confidence = float(confidence)
+        if not 0 < confidence < 1:
+            raise ValueError("confidence must lie strictly between 0 and 1")
+
+        tail_probability = (1 - confidence)/2
+        lower = self.ppf(tail_probability)
+        upper = -(-self).ppf(tail_probability)
+        return lower, upper
+
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
         """
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.

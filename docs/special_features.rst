@@ -24,6 +24,36 @@ first-order derivative propagation about the nominal values instead. These
 operations therefore propagate the quoted local uncertainty rather than
 attempting to reproduce the full transformed probability distribution.
 
+Distribution utilities
+----------------------
+
+The analytic :meth:`~asymmetric_uncertainty.a_u.cdf` is complemented by
+:meth:`~asymmetric_uncertainty.a_u.ppf`, which evaluates the inverse CDF, and
+:meth:`~asymmetric_uncertainty.a_u.rvs`, which draws random values from the
+same jointly normalized split-normal distribution. Sampling uses the unequal
+probability mass on either side of the mode, so the fraction of samples below
+``value`` is ``minus / (minus + plus)`` rather than one half for an asymmetric
+value.
+
+``rvs`` accepts either a seed or a :class:`numpy.random.Generator` through its
+``rng`` argument, allowing reproducible simulations without introducing a
+SciPy dependency.
+
+:meth:`~asymmetric_uncertainty.a_u.interval` returns intervals centered on the
+mode and scaled independently by the lower and upper Gaussian widths. The
+interval can be specified either by a number of sigma or by the corresponding
+contained probability. For example, ``interval(n_sigma=1)`` contains the same
+:math:`\operatorname{erf}(1/\sqrt{2})` probability as a one-sigma Gaussian
+interval, even when the two widths differ.
+
+This is distinct from an equal-tail credible interval. Use
+:meth:`~asymmetric_uncertainty.a_u.equal_tail_interval` when the probability
+excluded below the lower bound should equal the probability excluded above the
+upper bound. With no confidence specified, it uses the same
+:math:`\operatorname{erf}(1/\sqrt{2})` probability as a one-sigma Gaussian
+interval. For an asymmetric distribution, an equal-tail interval is not in
+general centered on ``value``.
+
 Intelligent display formatting
 ------------------------------
 
