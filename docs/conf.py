@@ -40,9 +40,12 @@ html_theme_options = {
     "navbar_align": "right",
     "github_url": "https://github.com/cgobat/asymmetric_uncertainty",
     "show_prev_next": False,
+    "show_nav_level": 2,
 }
 html_sidebars = {
+    "index": [],
     "**": [
+        "sidebar-collapse",
         "sidebar-nav-bs",
     ],
 }

@@ -21,7 +21,7 @@ is displayed as
 
 .. math::
 
-   3.0_{-0.4}^{+0.2},
+   3.0_{-0.4}^{+0.2}
 
 while a symmetric uncertainty:
 
@@ -34,7 +34,7 @@ is displayed as
 
 .. math::
 
-   3.0 \pm 0.3.
+   3.0 \pm 0.3
 
 "Strict" inequalities
 ----------------------

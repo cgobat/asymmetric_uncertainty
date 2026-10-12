@@ -6,12 +6,14 @@ numeric quantities with asymmetric uncertainties. Its primary interface is the
 :class:`asymmetric_uncertainty.a_u` class.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Documentation
+   :hidden:
 
-   getting_started
-   special_features
-   api
-   resources
-   supporting_material
-   limits
+   documentation
+
+Documentation
+-------------
+
+* :doc:`Getting started <getting_started>`
+* :doc:`Special features <special_features>`
+* :doc:`API reference <api>`
+* :doc:`Links and resources <resources>`

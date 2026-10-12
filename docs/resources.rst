@@ -1,8 +1,18 @@
 Links and resources
 ===================
 
-* :doc:`supporting_material`
-* :doc:`limits`
+Additional documentation
+------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   supporting_material
+   limits
+
+External resources
+------------------
+
 * `Jupyter/IPython notebook with usage examples <https://github.com/cgobat/asymmetric_uncertainty/blob/main/example.ipynb>`_
 * `Source repository <https://github.com/cgobat/asymmetric_uncertainty/>`_
 * ASCL ID: `ascl:2208.005 <https://ascl.net/2208.005>`_
