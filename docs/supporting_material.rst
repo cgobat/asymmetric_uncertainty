@@ -33,4 +33,4 @@ Supporting material and further reading
        `bibcode:2023MNRAS.523..775G <https://scixplorer.org/abs/2023MNRAS.523..775G/abstract>`_.
 
 .. [5] C. Gobat et al. (2022), *RNAAS* **6**\ (8), 163.
-       `bibcode:2022RNAAS.soft08005G <...>`_.
+       `bibcode:2022RNAAS...6..163G <https://scixplorer.org/abs/2022RNAAS...6..163G/abstract>`_.
