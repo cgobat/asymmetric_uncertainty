@@ -49,7 +49,9 @@ interval, even when the two widths differ.
 This is distinct from an equal-tail credible interval. Use
 :meth:`~asymmetric_uncertainty.a_u.equal_tail_interval` when the probability
 excluded below the lower bound should equal the probability excluded above the
-upper bound. For an asymmetric distribution, an equal-tail interval is not in
+upper bound. With no confidence specified, it uses the same
+:math:`\operatorname{erf}(1/\sqrt{2})` probability as a one-sigma Gaussian
+interval. For an asymmetric distribution, an equal-tail interval is not in
 general centered on ``value``.
 
 Intelligent display formatting

@@ -252,8 +252,8 @@ class a_u:
             probability = q_arr[lower]*width_sum/(2*self.minus)
             result[lower] = self.value + self.minus*np_ppf(probability)
         if np.any(upper):
-            probability = (q_arr[upper]*width_sum - self.minus + self.plus)/(2*self.plus)
-            result[upper] = self.value + self.plus*np_ppf(probability)
+            tail_probability = (1 - q_arr[upper])*width_sum/(2*self.plus)
+            result[upper] = self.value - self.plus*np_ppf(tail_probability)
 
         return result.item() if np.isscalar(q) else result
 
@@ -288,7 +288,7 @@ class a_u:
             confidence = float(confidence)
             if not 0 < confidence < 1:
                 raise ValueError("confidence must lie strictly between 0 and 1")
-            n_sigma = NormalDist().inv_cdf((1 + confidence)/2)
+            n_sigma = -NormalDist().inv_cdf((1 - confidence)/2)
         elif n_sigma is None:
             n_sigma = 1.0
 
@@ -302,7 +302,10 @@ class a_u:
         )
 
     def equal_tail_interval(self, confidence=None):
-        """Return an equal-tail interval containing the requested probability mass."""
+        """
+        Return an equal-tail interval containing the requested probability mass.
+        The default confidence is the conventional one-sigma Gaussian probability.
+        """
         if confidence is None:
             confidence = erf(1/np.sqrt(2))
         confidence = float(confidence)
@@ -310,8 +313,9 @@ class a_u:
             raise ValueError("confidence must lie strictly between 0 and 1")
 
         tail_probability = (1 - confidence)/2
-        bounds = self.ppf([tail_probability, 1 - tail_probability])
-        return tuple(bounds)
+        lower = self.ppf(tail_probability)
+        upper = -(-self).ppf(tail_probability)
+        return lower, upper
 
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
         """

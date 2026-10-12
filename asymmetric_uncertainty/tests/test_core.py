@@ -152,6 +152,10 @@ class TestCore(unittest.TestCase):
         exact = a_u(2.0)
         self.assertEqual(exact.ppf(0.5), 2.0)
 
+        near_one = np.nextafter(1.0, 0.0)
+        upper_tail = a_u(0.0, 3.0, 1.0)
+        self.assertTrue(np.isfinite(upper_tail.ppf(near_one)))
+
     def test_Random_Sampling(self):
 
         samples = self.testValue.rvs(size=50000, rng=12345)
@@ -191,6 +195,12 @@ class TestCore(unittest.TestCase):
             symmetric.interval(),
             rtol=0,
             atol=1e-12,
+        )
+
+        near_one = np.nextafter(1.0, 0.0)
+        self.assertTrue(np.all(np.isfinite(self.testValue.interval(confidence=near_one))))
+        self.assertTrue(
+            np.all(np.isfinite(self.testValue.equal_tail_interval(near_one)))
         )
 
         with self.assertRaises(ValueError):
