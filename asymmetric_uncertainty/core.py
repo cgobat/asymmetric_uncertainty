@@ -29,7 +29,7 @@ def _split_normal_shape_from_moments(variance, third_moment):
         raise ValueError("variance must be non-negative")
     if variance == 0:
         if third_moment != 0:
-            raise ValueError("a zero-variance distribution cannot have non-zero skew")
+            raise ValueError("a zero-variance distribution cannot have a non-zero third central moment")
         return 0.0, 0.0
 
     max_width_diff = np.sqrt(variance/(1 - 2/np.pi))
@@ -287,9 +287,15 @@ class a_u:
     def __add__(self,other):
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
+        self_variance = self.variance
+        other_variance = other.variance
+        if self_variance == 0:
+            return a_u(self.value + other.value, other.plus, other.minus)
+        if other_variance == 0:
+            return a_u(self.value + other.value, self.plus, self.minus)
         return a_u._from_moments(
             self.mean + other.mean,
-            self.variance + other.variance,
+            self_variance + other_variance,
             self._third_central_moment + other._third_central_moment,
         )
     

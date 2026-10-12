@@ -111,7 +111,19 @@ class TestCore(unittest.TestCase):
         )
         x = np.concatenate((neg_x[:-1], pos_x))
         pdf = self.testValue.pdf(x)
-        self.assertAlmostEqual(np.trapezoid(pdf, x), 1.0, places=6)
+        norm = np.trapezoid(pdf, x)
+        self.assertAlmostEqual(norm, 1.0, places=6)
+
+        numerical_mean = np.trapezoid(x*pdf, x)/norm
+        numerical_variance = np.trapezoid((x - numerical_mean)**2*pdf, x)/norm
+        numerical_third = np.trapezoid((x - numerical_mean)**3*pdf, x)/norm
+        self.assertAlmostEqual(self.testValue.mean, numerical_mean, places=8)
+        self.assertAlmostEqual(self.testValue.variance, numerical_variance, places=8)
+        self.assertAlmostEqual(
+            self.testValue.skewness,
+            numerical_third/numerical_variance**1.5,
+            places=8,
+        )
 
         self.assertAlmostEqual(
             np.trapezoid(self.testValue.pdf(neg_x), neg_x),
@@ -137,6 +149,17 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(shifted.value, 12.0)
         self.assertAlmostEqual(shifted.plus, self.testValue_a.plus)
         self.assertAlmostEqual(shifted.minus, self.testValue_a.minus)
+
+        extreme = a_u(10.0, 1e-12, 2.0)
+        shifted = extreme + 2
+        self.assertEqual(shifted.value, 12.0)
+        self.assertEqual(shifted.plus, extreme.plus)
+        self.assertEqual(shifted.minus, extreme.minus)
+
+        shifted = a_u(2.0) + extreme
+        self.assertEqual(shifted.value, 12.0)
+        self.assertEqual(shifted.plus, extreme.plus)
+        self.assertEqual(shifted.minus, extreme.minus)
 
     def test_Addition_Associativity(self):
 
