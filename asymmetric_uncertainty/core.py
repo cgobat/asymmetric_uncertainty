@@ -18,6 +18,82 @@ from math import erf
 
 np_erf = np.vectorize(erf, doc="Vectorized error function at x.")  # prevents need for SciPy dependency
 
+_SPLIT_NORMAL_MEAN_FACTOR = np.sqrt(2/np.pi)
+_SPLIT_NORMAL_VARIANCE_FACTOR = 3/4 - 2/np.pi
+_SPLIT_NORMAL_SKEW_FACTOR = 6/np.pi - 2
+
+
+def _split_normal_moments(value, plus, minus):
+    """Return the mean, variance, and third central moment of a split normal."""
+    width_sum = plus + minus
+    width_diff = plus - minus
+    mean = value + _SPLIT_NORMAL_MEAN_FACTOR*width_diff
+    variance = width_sum**2/4 + _SPLIT_NORMAL_VARIANCE_FACTOR*width_diff**2
+    third_moment = (
+        _SPLIT_NORMAL_MEAN_FACTOR
+        * width_diff
+        * (variance + _SPLIT_NORMAL_SKEW_FACTOR*width_diff**2)
+    )
+    return mean, variance, third_moment
+
+
+def _split_normal_from_moments(mean, variance, third_moment):
+    """Return split-normal ``(mode, plus, minus)`` matching three moments."""
+    if variance < 0:
+        raise ValueError("variance must be non-negative")
+    if variance == 0:
+        if third_moment != 0:
+            raise ValueError("a zero-variance distribution cannot have non-zero skew")
+        return mean, 0.0, 0.0
+
+    max_width_diff = np.sqrt(variance/(1 - 2/np.pi))
+
+    def moment_for_width_diff(width_diff):
+        return (
+            _SPLIT_NORMAL_MEAN_FACTOR
+            * width_diff
+            * (variance + _SPLIT_NORMAL_SKEW_FACTOR*width_diff**2)
+        )
+
+    max_third_moment = moment_for_width_diff(max_width_diff)
+    if np.abs(third_moment) > max_third_moment:
+        if np.isclose(np.abs(third_moment), max_third_moment, rtol=1e-12, atol=0):
+            width_diff = np.sign(third_moment)*max_width_diff
+        else:
+            raise ValueError("moments cannot be represented by a split normal")
+    elif third_moment == 0:
+        width_diff = 0.0
+    else:
+        lower = -max_width_diff
+        upper = max_width_diff
+        for _ in range(80):
+            width_diff = (lower + upper)/2
+            if moment_for_width_diff(width_diff) < third_moment:
+                lower = width_diff
+            else:
+                upper = width_diff
+        width_diff = (lower + upper)/2
+
+    width_sum = 2*np.sqrt(
+        max(0.0, variance - _SPLIT_NORMAL_VARIANCE_FACTOR*width_diff**2)
+    )
+    minus = max(0.0, (width_sum - width_diff)/2)
+    plus = max(0.0, (width_sum + width_diff)/2)
+    value = mean - _SPLIT_NORMAL_MEAN_FACTOR*width_diff
+    return value, plus, minus
+
+
+def _combine_independent(left, right, right_sign):
+    """Moment-match the sum of two independent split-normal variables."""
+    left_mean, left_variance, left_third = _split_normal_moments(*left.items())
+    right_mean, right_variance, right_third = _split_normal_moments(*right.items())
+    return _split_normal_from_moments(
+        left_mean + right_sign*right_mean,
+        left_variance + right_variance,
+        left_third + right_sign*right_third,
+    )
+
+
 def _propagated_errors(operands, derivatives):
     """Return first-order asymmetric errors for the supplied partial derivatives."""
     pos_terms = []
@@ -35,9 +111,13 @@ def _propagated_errors(operands, derivatives):
 
 class a_u:
     """
-    Class for representing and handling propagation of asymmetric uncertainties assuming a pseudo-Gaussian
-    probability distribution where the plus and minus errors in each direction of the nominal value are like
-    modified 1-sigma standard deviations.
+    Class for representing and handling propagation of asymmetric uncertainties using a jointly normalized
+    split-normal probability distribution. The nominal value is the mode, while the plus and minus errors are
+    the Gaussian widths above and below the mode, respectively.
+
+    Addition and subtraction treat operands as independent random variables and approximate their convolution
+    with another split normal matched to the first three moments. Other arithmetic operations use first-order
+    derivative propagation about the nominal values.
 
     Parameters
     ----------
@@ -190,48 +270,22 @@ class a_u:
         return a_u(-self.value,self.minus,self.plus)
         
     def __add__(self,other):
-        if isinstance(other,type(self)):
-            pass
-        else:
+        if not isinstance(other,type(self)):
             other = a_u(other,0,0)
-        result = self.value + other.value
-        pos = np.sqrt(self.plus**2 + other.plus**2)
-        neg = np.sqrt(self.minus**2 + other.minus**2)
-        #print("added",self,"+",other,"=",a_u(result,pos,neg))
-        return a_u(result,pos,neg)
+        return a_u(*_combine_independent(self, other, 1))
     
     def __radd__(self,other):
-        if isinstance(other,type(self)):
-            pass
-        else:
-            other = a_u(other,0,0)
-        result = self.value + other.value
-        pos = np.sqrt(self.plus**2 + other.plus**2)
-        neg = np.sqrt(self.minus**2 + other.minus**2)
-        #print("added",other,"+",self,"=",a_u(result,pos,neg))
-        return a_u(result,pos,neg)
+        return self + other
     
     def __sub__(self,other):
-        if isinstance(other,type(self)):
-            pass
-        else:
+        if not isinstance(other,type(self)):
             other = a_u(other,0,0)
-        result = self.value - other.value
-        pos = np.sqrt(self.plus**2 + other.minus**2)
-        neg = np.sqrt(self.minus**2 + other.plus**2)
-        #print("subtracted",other,"from",self,"=",a_u(result,pos,neg))
-        return a_u(result,pos,neg)
+        return a_u(*_combine_independent(self, other, -1))
     
     def __rsub__(self,other):
-        if isinstance(other,type(self)):
-            pass
-        else:
+        if not isinstance(other,type(self)):
             other = a_u(other,0,0)
-        result = other.value - self.value
-        pos = np.sqrt(self.minus**2 + other.plus**2)
-        neg = np.sqrt(self.plus**2 + other.minus**2)
-        #print("subtracted",self,"from",other,"=",a_u(result,pos,neg))
-        return a_u(result,pos,neg)
+        return a_u(*_combine_independent(other, self, -1))
     
     def __mul__(self,other):
         if isinstance(other,type(self)):
