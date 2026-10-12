@@ -2,8 +2,9 @@ Supporting material and further reading
 =======================================
 
 * The probability distribution used by this package to model asymmetrically
-  uncertain quantities is given in Eq. (2) of Starling et al. (2008). [1]_ The
-  methodology presented there partially inspired the creation of this package.
+  uncertain quantities is given in `Eq. (2) <https://iopscience.iop.org/article/10.1086/521975/fulltext/71979.text.html#sc5.1>`_
+  of Starling et al. (2008). [1]_ The methodology presented there partially
+  inspired the creation of this package.
 
 * Broader treatments of asymmetric errors and their combination are given by
   Barlow (2003) [2]_ and Barlow (2004). [3]_ The moment-based treatment of
