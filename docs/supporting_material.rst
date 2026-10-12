@@ -2,17 +2,18 @@ Supporting material and further reading
 =======================================
 
 * The probability distribution used by this package to model asymmetrically
-  uncertain quantities is given in Eq. (2) of Starling et al. (2008). [1]_ The
+  uncertain quantities is given in Eq. (2) of Starling et al. (2008).[1]_ The
   methodology presented there partially inspired the creation of this package.
 
 * `muryelgp/asymmetric_uncertainties <https://github.com/muryelgp/asymmetric_uncertainties>`_
   provides similar functionality using Monte Carlo methods rather than an
   empirical/analytical function to model the error distributions. The
   mathematical basis for that alternative approach is described by Barlow
-  (2004). [2]_
+  (2004).[2]_
 
-* This package has been used in `cgobat/dark-GRBs <https://github.com/cgobat/dark-GRBs>`_
-  [3]_ and `cgobat/XDBS <https://github.com/cgobat/XDBS>`_. [4]_
+* This package was originally developed for and subsequently used in
+  `cgobat/dark-GRBs <https://github.com/cgobat/dark-GRBs>`_[3]_ and
+  `cgobat/XDBS <https://github.com/cgobat/XDBS>`_.[4]_
 
 .. rubric:: References
 
