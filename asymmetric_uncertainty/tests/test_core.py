@@ -131,6 +131,44 @@ class TestCore(unittest.TestCase):
             places=6,
         )
 
+    def test_PPF(self):
+
+        mode_probability = self.testValue.minus/(self.testValue.plus + self.testValue.minus)
+        quantiles = np.array([0.01, 0.1, mode_probability, 0.9, 0.99])
+        values = self.testValue.ppf(quantiles)
+
+        np.testing.assert_allclose(self.testValue.cdf(values), quantiles, rtol=0, atol=1e-12)
+        self.assertAlmostEqual(self.testValue.ppf(mode_probability), self.testValue.value)
+        self.assertEqual(self.testValue.ppf(0), -np.inf)
+        self.assertEqual(self.testValue.ppf(1), np.inf)
+        self.assertTrue(np.isnan(self.testValue.ppf(np.nan)))
+
+        with self.assertRaises(ValueError):
+            self.testValue.ppf(-0.1)
+        with self.assertRaises(ValueError):
+            self.testValue.ppf(1.1)
+
+        exact = a_u(2.0)
+        self.assertEqual(exact.ppf(0.5), 2.0)
+
+    def test_Random_Sampling(self):
+
+        samples = self.testValue.rvs(size=50000, rng=12345)
+        repeated = self.testValue.rvs(size=50000, rng=12345)
+
+        np.testing.assert_array_equal(samples, repeated)
+        self.assertEqual(samples.shape, (50000,))
+        self.assertAlmostEqual(np.mean(samples), self.testValue.mean, delta=0.01)
+        self.assertAlmostEqual(
+            np.mean(samples < self.testValue.value),
+            self.testValue.minus/(self.testValue.plus + self.testValue.minus),
+            delta=0.01,
+        )
+
+        exact = a_u(2.0)
+        np.testing.assert_array_equal(exact.rvs(size=3, rng=123), np.full(3, 2.0))
+        self.assertEqual(exact.rvs(rng=123), 2.0)
+
     def test_Addition(self):
 
         testValue_c : a_u = self.testValue_a + self.testValue_b

@@ -24,6 +24,21 @@ first-order derivative propagation about the nominal values instead. These
 operations therefore propagate the quoted local uncertainty rather than
 attempting to reproduce the full transformed probability distribution.
 
+Distribution utilities
+----------------------
+
+The analytic :meth:`~asymmetric_uncertainty.a_u.cdf` is complemented by
+:meth:`~asymmetric_uncertainty.a_u.ppf`, which evaluates the inverse CDF, and
+:meth:`~asymmetric_uncertainty.a_u.rvs`, which draws random values from the
+same jointly normalized split-normal distribution. Sampling uses the unequal
+probability mass on either side of the mode, so the fraction of samples below
+``value`` is ``minus / (minus + plus)`` rather than one half for an asymmetric
+value.
+
+``rvs`` accepts either a seed or a :class:`numpy.random.Generator` through its
+``rng`` argument, allowing reproducible simulations without introducing a
+SciPy dependency.
+
 Intelligent display formatting
 ------------------------------
 

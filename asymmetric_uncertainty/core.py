@@ -15,8 +15,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 from math import erf
+from statistics import NormalDist
 
 np_erf = np.vectorize(erf, doc="Vectorized error function at x.")  # prevents need for SciPy dependency
+np_ppf = np.vectorize(NormalDist().inv_cdf, otypes=[float])
 
 _SPLIT_NORMAL_MEAN_FACTOR = np.sqrt(2/np.pi)
 _SPLIT_NORMAL_VARIANCE_FACTOR = 3/4 - 2/np.pi
@@ -223,6 +225,60 @@ class a_u:
                                 lambda x: (self.minus + self.plus*np_erf((x-self.value)/(self.plus*np.sqrt(2))))/width_sum])
         return cdf_arr.item() if np.isscalar(x) else cdf_arr
     
+    def ppf(self, q):
+        """Return quantiles of the represented split-normal distribution."""
+        q_arr = np.asanyarray(q).astype(float)
+        finite = np.isfinite(q_arr)
+        if np.any((q_arr[finite] < 0) | (q_arr[finite] > 1)):
+            raise ValueError("quantiles must lie between 0 and 1")
+
+        result = np.full(q_arr.shape, np.nan, dtype=float)
+        width_sum = self.plus + self.minus
+        if width_sum == 0:
+            result[finite] = self.value
+            return result.item() if np.isscalar(q) else result
+
+        lower_endpoint = finite & (q_arr == 0)
+        upper_endpoint = finite & (q_arr == 1)
+        result[lower_endpoint] = self.value if self.minus == 0 else -np.inf
+        result[upper_endpoint] = self.value if self.plus == 0 else np.inf
+
+        interior = finite & (q_arr > 0) & (q_arr < 1)
+        mode_probability = self.minus/width_sum
+        lower = interior & (q_arr < mode_probability)
+        upper = interior & ~lower
+
+        if np.any(lower):
+            probability = q_arr[lower]*width_sum/(2*self.minus)
+            result[lower] = self.value + self.minus*np_ppf(probability)
+        if np.any(upper):
+            probability = (q_arr[upper]*width_sum - self.minus + self.plus)/(2*self.plus)
+            result[upper] = self.value + self.plus*np_ppf(probability)
+
+        return result.item() if np.isscalar(q) else result
+
+    def rvs(self, size=None, rng=None):
+        """Draw random values from the represented split-normal distribution."""
+        if isinstance(rng, np.random.Generator):
+            generator = rng
+        else:
+            generator = np.random.default_rng(rng)
+
+        width_sum = self.plus + self.minus
+        if width_sum == 0:
+            if size is None:
+                return self.value
+            return np.full(size, self.value, dtype=float)
+
+        negative_side = generator.random(size=size) < self.minus/width_sum
+        magnitude = np.abs(generator.standard_normal(size=size))
+        samples = np.where(
+            negative_side,
+            self.value - self.minus*magnitude,
+            self.value + self.plus*magnitude,
+        )
+        return samples.item() if size is None else samples
+
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
         """
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
