@@ -119,6 +119,19 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(shifted.plus, self.testValue_a.plus)
         self.assertAlmostEqual(shifted.minus, self.testValue_a.minus)
 
+    def test_Addition_Associativity(self):
+
+        first = a_u(1.0, 0.1, 0.4)
+        second = a_u(2.0, 0.3, 0.2)
+        third = a_u(-0.5, 0.2, 0.5)
+
+        left = (first + second) + third
+        right = first + (second + third)
+
+        self.assertAlmostEqual(left.value, right.value)
+        self.assertAlmostEqual(left.plus, right.plus)
+        self.assertAlmostEqual(left.minus, right.minus)
+
     def test_Subtraction(self):
 
         testValue_c : a_u = self.testValue_a - self.testValue_b
