@@ -279,6 +279,40 @@ class a_u:
         )
         return samples.item() if size is None else samples
 
+    def interval(self, n_sigma=None, confidence=None):
+        """Return a mode-centered interval in units of the two Gaussian widths."""
+        if n_sigma is not None and confidence is not None:
+            raise ValueError("specify either n_sigma or confidence, not both")
+
+        if confidence is not None:
+            confidence = float(confidence)
+            if not 0 < confidence < 1:
+                raise ValueError("confidence must lie strictly between 0 and 1")
+            n_sigma = NormalDist().inv_cdf((1 + confidence)/2)
+        elif n_sigma is None:
+            n_sigma = 1.0
+
+        n_sigma = float(n_sigma)
+        if not np.isfinite(n_sigma) or n_sigma < 0:
+            raise ValueError("n_sigma must be a finite non-negative number")
+
+        return (
+            self.value - n_sigma*self.minus,
+            self.value + n_sigma*self.plus,
+        )
+
+    def equal_tail_interval(self, confidence=None):
+        """Return an equal-tail interval containing the requested probability mass."""
+        if confidence is None:
+            confidence = erf(1/np.sqrt(2))
+        confidence = float(confidence)
+        if not 0 < confidence < 1:
+            raise ValueError("confidence must lie strictly between 0 and 1")
+
+        tail_probability = (1 - confidence)/2
+        bounds = self.ppf([tail_probability, 1 - tail_probability])
+        return tuple(bounds)
+
     def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
         """
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.

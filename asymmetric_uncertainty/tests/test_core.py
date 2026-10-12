@@ -11,6 +11,7 @@
     LICENSE file distributed with this program for more details.
 """
 
+from math import erf
 import unittest
 import numpy as np
 from asymmetric_uncertainty import UncertaintyArray, a_u
@@ -168,6 +169,38 @@ class TestCore(unittest.TestCase):
         exact = a_u(2.0)
         np.testing.assert_array_equal(exact.rvs(size=3, rng=123), np.full(3, 2.0))
         self.assertEqual(exact.rvs(rng=123), 2.0)
+
+    def test_Intervals(self):
+
+        self.assertEqual(self.testValue.interval(), (2.6, 3.2))
+        self.assertEqual(self.testValue.interval(n_sigma=2), (2.2, 3.4))
+
+        one_sigma_confidence = erf(1/np.sqrt(2))
+        confidence_interval = self.testValue.interval(confidence=one_sigma_confidence)
+        np.testing.assert_allclose(confidence_interval, self.testValue.interval(), rtol=0, atol=1e-12)
+
+        equal_tail = self.testValue.equal_tail_interval(one_sigma_confidence)
+        lower_probability = (1 - one_sigma_confidence)/2
+        self.assertAlmostEqual(self.testValue.cdf(equal_tail[0]), lower_probability)
+        self.assertAlmostEqual(self.testValue.cdf(equal_tail[1]), 1 - lower_probability)
+        self.assertNotEqual(equal_tail, self.testValue.interval())
+
+        symmetric = a_u(3.0, 0.4, 0.4)
+        np.testing.assert_allclose(
+            symmetric.equal_tail_interval(one_sigma_confidence),
+            symmetric.interval(),
+            rtol=0,
+            atol=1e-12,
+        )
+
+        with self.assertRaises(ValueError):
+            self.testValue.interval(n_sigma=1, confidence=0.68)
+        with self.assertRaises(ValueError):
+            self.testValue.interval(n_sigma=-1)
+        with self.assertRaises(ValueError):
+            self.testValue.interval(confidence=1)
+        with self.assertRaises(ValueError):
+            self.testValue.equal_tail_interval(0)
 
     def test_Addition(self):
 
