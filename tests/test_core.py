@@ -58,9 +58,7 @@ class TestCore(unittest.TestCase):
 
 
         self.assertFalse(self.testValue.is_symmetric)
-        self.assertIs(self.testValue.sign, +1)
-
-        # exp
+        self.assertIs(self.testValue.sign, 1)
 
         self.assertAlmostEqual(self.testValue.exp().value, np.exp(3.0)) 
 
@@ -69,6 +67,25 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(self.testValue.log().value, np.log(3.0)) 
 
         self.assertAlmostEqual(self.testValue.sqrt().value, np.sqrt(3.0)) 
+
+    def test_Native_Scalar_Types(self):
+
+        value = a_u(3.0, 0.2, 0.4)
+        other = a_u(2.5, 0.3, 0.3)
+
+        self.assertIs(type(value.value), float)
+        self.assertIs(type(value.plus), float)
+        self.assertIs(type(value.minus), float)
+        self.assertIs(type(value.maximum), float)
+        self.assertIs(type(value.minimum), float)
+        self.assertIs(type(value.is_symmetric), bool)
+        self.assertIs(type(value > other), bool)
+        self.assertIs(type(value >> other), bool)
+
+        value.add_error(0.1, inplace=True)
+        self.assertIs(type(value.plus), float)
+        self.assertIs(type(value.minus), float)
+        self.assertIs(type(value >> other), bool)
 
     def test_Distribution_Moments(self):
 

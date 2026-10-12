@@ -129,8 +129,8 @@ class a_u:
                 raise ValueError("Failed to parse string, likely due to improper formatting.")
         else:
             self.value = float(nominal)
-            self.plus = np.abs(float(pos_err))
-            self.minus = np.abs(float(neg_err))
+            self.plus = abs(float(pos_err))
+            self.minus = abs(float(neg_err))
 
     @property
     def maximum(self):
@@ -145,8 +145,10 @@ class a_u:
         return 1 if self.value >= 0 else -1
 
     @property
-    def is_symmetric(self):
-        return np.isclose(self.plus, self.minus)
+    def is_symmetric(self) -> bool:
+        if np.isclose(self.plus, self.minus):
+            return True
+        return False
 
     @property
     def mean(self):
@@ -365,11 +367,11 @@ class a_u:
         else:
             raise ValueError
         if inplace:
-            self.plus = new_pos
-            self.minus = new_neg
+            self.plus = float(new_pos)
+            self.minus = float(new_neg)
         else:
-            return a_u(self.value,new_pos,new_neg)
-    
+            return a_u(self.value, new_pos, new_neg)
+
     def items(self):
         """
         Returns a tuple of `(value,plus,minus)`.
