@@ -478,6 +478,12 @@ class a_u:
         if self.value == 0 and exponent.value < 0:
             raise ValueError("zero cannot be raised to a negative power")
 
+        if exponent is self and exponent_is_uncertain:
+            result = self.value**self.value
+            derivative = result*(np.log(self.value) + 1)
+            pos, neg = _propagated_errors((self,), (derivative,))
+            return a_u(result, pos, neg)
+
         result = self.value**exponent.value
 
         if self.value == 0:
