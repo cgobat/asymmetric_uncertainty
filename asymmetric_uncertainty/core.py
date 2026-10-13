@@ -160,6 +160,11 @@ class a_u:
         return self.value + _SPLIT_NORMAL_MEAN_FACTOR*(self.plus - self.minus)
 
     @property
+    def median(self):
+        """Median of the represented split-normal distribution."""
+        return self.ppf(0.5)
+
+    @property
     def variance(self):
         """Variance of the represented split-normal distribution."""
         width_sum = self.plus + self.minus
@@ -187,6 +192,30 @@ class a_u:
         if variance == 0:
             return np.nan
         return self._third_central_moment/variance**1.5
+
+    @property
+    def kurtosis(self):
+        """Fisher (excess) kurtosis of the represented split-normal distribution."""
+        variance = self.variance
+        if variance == 0:
+            return np.nan
+
+        width_sum = self.plus + self.minus
+        mean_shift = self.mean - self.value
+        second_about_mode = (self.minus**3 + self.plus**3)/width_sum
+        third_about_mode = (
+            2*_SPLIT_NORMAL_MEAN_FACTOR
+            * (self.plus**4 - self.minus**4)
+            / width_sum
+        )
+        fourth_about_mode = 3*(self.minus**5 + self.plus**5)/width_sum
+        fourth_central_moment = (
+            fourth_about_mode
+            - 4*mean_shift*third_about_mode
+            + 6*mean_shift**2*second_about_mode
+            - 3*mean_shift**4
+        )
+        return fourth_central_moment/variance**2 - 3
 
     @classmethod
     def _from_moments(cls, mean, variance, third_moment):

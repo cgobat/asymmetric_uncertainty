@@ -38,6 +38,9 @@ The principal scalar attributes are:
    Mean of the represented split-normal distribution. For asymmetric errors,
    this generally differs from ``value``, which is the mode.
 
+``median``
+   Median of the represented split-normal distribution.
+
 ``variance``
    Variance of the represented split-normal distribution.
 
@@ -47,6 +50,10 @@ The principal scalar attributes are:
 ``skewness``
    Standardized third central moment of the represented split-normal
    distribution. This is ``nan`` for an exact, zero-variance value.
+
+``kurtosis``
+   Fisher (excess) kurtosis of the represented split-normal distribution. A
+   Gaussian has kurtosis 0; an exact, zero-variance value has ``nan`` kurtosis.
 
 ``UncertaintyArray``
 --------------------

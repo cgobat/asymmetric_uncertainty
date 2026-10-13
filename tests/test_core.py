@@ -92,19 +92,29 @@ class TestCore(unittest.TestCase):
         mean, variance, third = self._distribution_moments(self.testValue)
 
         self.assertAlmostEqual(self.testValue.mean, mean)
+        self.assertAlmostEqual(self.testValue.median, self.testValue.ppf(0.5))
         self.assertAlmostEqual(self.testValue.variance, variance)
         self.assertAlmostEqual(self.testValue.std, np.sqrt(variance))
         self.assertAlmostEqual(self.testValue.skewness, third/variance**1.5)
+
+        samples = self.testValue.rvs(size=500000, rng=12345)
+        sample_mean = np.mean(samples)
+        sample_variance = np.var(samples)
+        sample_kurtosis = np.mean((samples - sample_mean)**4)/sample_variance**2 - 3
+        self.assertAlmostEqual(self.testValue.kurtosis, sample_kurtosis, delta=0.03)
 
         symmetric = a_u(3.0, 0.4, 0.4)
         self.assertAlmostEqual(symmetric.mean, symmetric.value)
         self.assertAlmostEqual(symmetric.variance, 0.4**2)
         self.assertAlmostEqual(symmetric.std, 0.4)
         self.assertAlmostEqual(symmetric.skewness, 0.0)
+        self.assertAlmostEqual(symmetric.kurtosis, 0.0)
 
         exact = a_u(3.0)
         self.assertEqual(exact.variance, 0.0)
+        self.assertEqual(exact.median, 3.0)
         self.assertTrue(np.isnan(exact.skewness))
+        self.assertTrue(np.isnan(exact.kurtosis))
 
     def test_Distribution(self):
 
