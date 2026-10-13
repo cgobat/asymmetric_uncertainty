@@ -19,6 +19,7 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/cgobat/asymmetric_uncertainty"
+Documentation = "https://asymmetric-uncertainty.readthedocs.io/"
 Download = "https://github.com/cgobat/asymmetric_uncertainty/archive/main.zip"
 
 [tool.setuptools]
