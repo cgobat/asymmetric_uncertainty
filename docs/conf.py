@@ -27,6 +27,7 @@ intersphinx_mapping = {
 root_doc = "index"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+html_favicon = "assets/favicon.png"
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "navbar_start": ["navbar-logo"],
