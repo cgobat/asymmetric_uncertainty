@@ -87,14 +87,17 @@ def _propagated_errors(operands, derivatives):
 
 class a_u:
     """
-    Class for representing and handling propagation of asymmetric uncertainties using a jointly normalized
-    split-normal probability distribution. The nominal value is the mode, while the plus and minus errors are
-    the Gaussian widths above and below the mode, respectively.
+    Class for representing and handling propagation of asymmetric uncertainties
+    using a jointly normalized split-normal probability distribution. The
+    nominal value is the mode, while the plus and minus errors are the Gaussian
+    widths above and below the mode, respectively.
 
-    Addition and subtraction treat distinct operands as independent random variables and approximate their
-    convolution with another split normal matched to the first three moments. Reuse of the same object is
-    recognized for simple self-addition, self-subtraction, and self-multiplication. Other arithmetic operations
-    use first-order derivative propagation about the nominal values.
+    Addition and subtraction treat distinct operands as independent random
+    variables and approximate their convolution with another split normal
+    matched to the first three moments. Reuse of the same object is recognized
+    for simple self-addition, subtraction, multiplication, division, and
+    exponentiation. Other arithmetic operations use first-order derivative
+    propagation about the nominal values.
 
     Parameters
     ----------
