@@ -14,7 +14,7 @@
 from math import erf
 import unittest
 import numpy as np
-from asymmetric_uncertainty import UncertaintyArray, a_u
+from asymmetric_uncertainty import UncertaintyArray, a_u, propagate
 
 if hasattr(np, "trapz") and not hasattr(np, "trapezoid"):
     np.trapezoid = np.trapz
@@ -320,6 +320,30 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(power.value, value.value**value.value)
         self.assertAlmostEqual(power.plus, derivative*value.plus)
         self.assertAlmostEqual(power.minus, derivative*value.minus)
+
+    def test_Monte_Carlo_Propagation(self):
+
+        value = a_u(3.0, 0.2, 0.4)
+
+        samples = propagate(lambda x: x**2, value, size=5000, rng=12345)
+        repeated = propagate(lambda x: x**2, value, size=5000, rng=12345)
+        np.testing.assert_array_equal(samples, repeated)
+        self.assertEqual(samples.shape, (5000,))
+
+        shared = propagate(lambda x, y: x - y, value, value, size=1000, rng=12345)
+        np.testing.assert_array_equal(shared, np.zeros(1000))
+
+        independent = propagate(
+            lambda x, y: x - y,
+            value,
+            a_u(*value.items()),
+            size=1000,
+            rng=12345,
+        )
+        self.assertGreater(np.std(independent), 0)
+
+        with self.assertRaises(ValueError):
+            propagate(lambda x: x, value, size=0)
 
     def test_Subtraction(self):
 

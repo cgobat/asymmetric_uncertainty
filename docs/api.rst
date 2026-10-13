@@ -58,6 +58,8 @@ The principal scalar attributes are:
 Convenience functions
 ---------------------
 
+.. autofunction:: propagate
+
 .. autofunction:: pos_errors
 
 .. autofunction:: neg_errors

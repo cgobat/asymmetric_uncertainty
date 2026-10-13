@@ -60,6 +60,29 @@ upper bound. With no confidence specified, it uses the same
 interval. For an asymmetric distribution, an equal-tail interval is not in
 general centered on ``value``.
 
+Monte Carlo propagation
+-----------------------
+
+The :func:`~asymmetric_uncertainty.propagate` function provides an optional
+Monte Carlo route for checking nonlinear propagation without changing the
+behavior of the arithmetic operators. It replaces each ``a_u`` argument with
+samples drawn from its split-normal distribution and evaluates a supplied
+callable on those arrays. For example:
+
+.. code-block:: python
+
+   samples = propagate(lambda x, y: x / y, A, B, size=10000, rng=42)
+
+The raw return value from the callable is returned directly; ``propagate`` does
+not fit the Monte Carlo result back to an ``a_u`` object. This makes the
+function useful for diagnostics and direct comparison with the package's
+analytic or first-order propagation rules without imposing another
+approximation on the sampled output.
+
+Each distinct ``a_u`` object is sampled once per call. Passing the same object
+multiple times therefore reuses the same sample realization and preserves
+perfect correlation, while separate objects are sampled independently.
+
 Intelligent display formatting
 ------------------------------
 

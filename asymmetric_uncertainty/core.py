@@ -601,6 +601,56 @@ class a_u:
         """
         return not (np.isnan(self.value) or (self.value is None))
 
+
+def propagate(function, *args, size=10000, rng=None):
+    """
+    Evaluate a callable on Monte Carlo samples drawn from ``a_u`` arguments.
+
+    Each distinct ``a_u`` object is sampled once, so passing the same object
+    more than once preserves perfect correlation. Separate objects are sampled
+    independently, even if they have identical values and uncertainties.
+    Non-``a_u`` arguments are passed to ``function`` unchanged.
+
+    Parameters
+    ----------
+    function : callable
+        Function to evaluate on the sampled arguments.
+    *args
+        Positional arguments for ``function``. ``a_u`` instances are replaced
+        by sample arrays; other arguments are passed through unchanged.
+    size : int, optional
+        Number of Monte Carlo samples to draw. Default is 10000.
+    rng : numpy.random.Generator or int or None, optional
+        Random generator or seed passed to the split-normal sampler.
+
+    Returns
+    -------
+    object
+        The return value from ``function``. No split-normal approximation is
+        fitted to the Monte Carlo result.
+    """
+    if isinstance(size, bool) or not isinstance(size, (int, np.integer)) or size <= 0:
+        raise ValueError("size must be a positive integer")
+
+    if isinstance(rng, np.random.Generator):
+        generator = rng
+    else:
+        generator = np.random.default_rng(rng)
+
+    samples = {}
+    sampled_args = []
+    for arg in args:
+        if isinstance(arg, a_u):
+            key = id(arg)
+            if key not in samples:
+                samples[key] = arg.rvs(size=size, rng=generator)
+            sampled_args.append(samples[key])
+        else:
+            sampled_args.append(arg)
+
+    return function(*sampled_args)
+
+
 class AsymmetricUncertainty(a_u): # alias for legacy namespace support
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
