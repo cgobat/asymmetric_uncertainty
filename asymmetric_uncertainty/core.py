@@ -172,21 +172,24 @@ class a_u:
         )
         return fourth_central_moment/variance**2 - 3
 
-    def __str__(self):
-        return f"{self}"
-    
-    def __format__(self, fmt_spec):
-        if np.isclose(self.plus, self.minus):
+    def __str__(self) -> str:
+        return format(self)
+
+    def __format__(self, fmt_spec) -> str:
+        if self.is_symmetric:
             return f"{format(self.value, fmt_spec)} ± {format(self.plus, fmt_spec)}"
         else:
             return "%s (+%s, -%s)" % tuple(format(x, fmt_spec) for x in self.items())
-    
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.value!r}, {self.plus!r}, {self.minus!r})"
+
     def _repr_latex_(self, float_fmt="f"):
-        if np.isclose(self.plus, self.minus):
+        if self.is_symmetric:
             return f"${format(self.value, float_fmt)}" + r" \pm " + f"{format(self.plus, float_fmt)}$"
         else:
             return "$%s^{+%s}_{-%s}$" % tuple(format(x, float_fmt) for x in self.items())
-    
+
     def pdf(self, x):
         """
         Computes and returns the values of the probability distribution function for the specified input.
