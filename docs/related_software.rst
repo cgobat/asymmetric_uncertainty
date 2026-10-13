@@ -67,6 +67,15 @@ propagation strategies.
      - Stores the sampled distribution itself, naturally retaining dependence
        when a sampled object is reused; also provides Astropy units and physical
        domain constraints, at greater sampling and memory cost.
+   * - `scinum <https://github.com/riga/scinum>`_
+     - Numeric values can carry multiple named symmetric or asymmetric
+       uncertainties, specified as either absolute or relative effects.
+     - Gaussian derivative-based propagation with configurable correlations
+       between uncertainty sources, plus a library of uncertainty-aware math
+       operations.
+     - Tracks multiple uncertainty components and their correlations rather than
+       interpreting a single pair of errors as one probability distribution; it
+       also supports NumPy arrays and scientific formatting/rounding.
    * - `split-normal <https://pypi.org/project/split-normal/>`_
      - The split-normal/two-piece-normal distribution, with NumPy and JAX
        implementations.
