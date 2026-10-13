@@ -425,18 +425,10 @@ class a_u:
         pos, neg = _propagated_errors((self, other), (other.value, self.value))
         #print("multiplied",self,"by",other,"=",a_u(result,pos,neg))
         return a_u(result,pos,neg)
-    
-    def __rmul__(self,other):
-        if isinstance(other,type(self)):
-            pass
-        else:
-            other = a_u(other,0,0)
-        
-        result = self.value * other.value
-        pos, neg = _propagated_errors((self, other), (other.value, self.value))
-        #print("multiplied",other,"by",self,"=",a_u(result,pos,neg))        
-        return a_u(result,pos,neg)
-    
+
+    def __rmul__(self, other):
+        return self * other
+
     def __truediv__(self,other): # self divided by something
         if isinstance(other,type(self)):
             pass
