@@ -1,28 +1,29 @@
 """Asymmetric Uncertainty: A package for handling non-standard numerical uncertainties.
 
-    Copyright (C) 2022 Caden Gobat
+Copyright (C) 2022 Caden Gobat
 
-    This program is free software: you can redistribute and/or modify it under
-    the terms of the GNU General Public License (either version 3 or, at your
-    option, any later version).
+This program is free software: you can redistribute and/or modify it under the
+terms of the GNU General Public License (either version 3 or, at your option,
+any later version).
 
-    This program is distributed in the hope that it will be useful, but comes
-    with ABSOLUTELY NO WARRANTY. See <https://www.gnu.org/licenses/> or the
-    LICENSE file distributed with this program for more details.
+This program is distributed in the hope that it will be useful, but comes with
+ABSOLUTELY NO WARRANTY. See <https://www.gnu.org/licenses/> or the LICENSE file
+distributed with this program for more details.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 import warnings
 from math import erf
 from statistics import NormalDist
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 np_erf = np.vectorize(erf, doc="Vectorized error function at x.")  # prevents need for SciPy dependency
 np_ppf = np.vectorize(NormalDist().inv_cdf, otypes=[float])
 
-_SPLIT_NORMAL_MEAN_FACTOR = np.sqrt(2/np.pi)
-_SPLIT_NORMAL_VARIANCE_FACTOR = 3/4 - 2/np.pi
-_SPLIT_NORMAL_THIRD_MOMENT_FACTOR = 6/np.pi - 2
+_SPLIT_NORMAL_MEAN_FACTOR = np.sqrt(2 / np.pi)
+_SPLIT_NORMAL_VARIANCE_FACTOR = 3 / 4 - 2 / np.pi
+_SPLIT_NORMAL_THIRD_MOMENT_FACTOR = 6 / np.pi - 2
 
 
 def _propagated_errors(operands, derivatives):
@@ -36,9 +37,10 @@ def _propagated_errors(operands, derivatives):
         else:
             pos_error = operand.minus
             neg_error = operand.plus
-        pos_terms.append((derivative*pos_error)**2)
-        neg_terms.append((derivative*neg_error)**2)
+        pos_terms.append((derivative * pos_error)**2)
+        neg_terms.append((derivative * neg_error)**2)
     return np.sqrt(np.sum(pos_terms)), np.sqrt(np.sum(neg_terms))
+
 
 class a_u:
     """
@@ -72,20 +74,22 @@ class a_u:
     minus : numeric
         the negative error on the value
     """
-    
+
     def __init__(self, nominal, pos_err=0, neg_err=0):
-        if isinstance(nominal,str):
-            stripped = nominal.replace(" ","")
+        if isinstance(nominal, str):
+            stripped = nominal.replace(" ", "")
             if "±" in stripped:
                 self.value = float(stripped.split("±")[0])
                 self.plus = self.minus = float(nominal.split("±")[1])
             elif "+" in stripped and "-" in stripped:
                 self.value = float(stripped.split("(")[0])
-                err_str = stripped.split("(")[1].replace(")","")
+                err_str = stripped.split("(")[1].replace(")", "")
                 self.plus = float(err_str.split(",")[0][1:])
                 self.minus = float(err_str.split(",")[1][1:])
             else:
-                raise ValueError("Failed to parse string, likely due to improper formatting.")
+                raise ValueError(
+                    "Failed to parse string, likely due to improper formatting."
+                )
         else:
             self.value = float(nominal)
             self.plus = abs(float(pos_err))
@@ -109,14 +113,12 @@ class a_u:
     @property
     def is_symmetric(self) -> bool:
         """Return whether the positive and negative uncertainties are equal within tolerance."""
-        if np.isclose(self.plus, self.minus):
-            return True
-        return False
+        return bool(np.isclose(self.plus, self.minus))
 
     @property
     def mean(self):
         """Mean of the associated split-normal distribution."""
-        return self.value + _SPLIT_NORMAL_MEAN_FACTOR*(self.plus - self.minus)
+        return self.value + _SPLIT_NORMAL_MEAN_FACTOR * (self.plus - self.minus)
 
     @property
     def median(self):
@@ -128,7 +130,7 @@ class a_u:
         """Variance of the associated split-normal distribution."""
         width_sum = self.plus + self.minus
         width_diff = self.plus - self.minus
-        return (width_sum**2)/4 + _SPLIT_NORMAL_VARIANCE_FACTOR*width_diff**2
+        return (width_sum**2) / 4 + _SPLIT_NORMAL_VARIANCE_FACTOR * width_diff**2
 
     @property
     def std(self):
@@ -142,7 +144,7 @@ class a_u:
         return (
             _SPLIT_NORMAL_MEAN_FACTOR
             * width_diff
-            * (self.variance + _SPLIT_NORMAL_THIRD_MOMENT_FACTOR*width_diff**2)
+            * (self.variance + _SPLIT_NORMAL_THIRD_MOMENT_FACTOR * width_diff**2)
         )
 
     @property
@@ -151,7 +153,7 @@ class a_u:
         variance = self.variance
         if variance == 0:
             return np.nan
-        return self._third_central_moment/variance**1.5
+        return self._third_central_moment / variance**1.5
 
     @property
     def kurtosis(self):
@@ -162,20 +164,18 @@ class a_u:
 
         width_sum = self.plus + self.minus
         mean_shift = self.mean - self.value
-        second_about_mode = (self.minus**3 + self.plus**3)/width_sum
+        second_about_mode = (self.minus**3 + self.plus**3) / width_sum
         third_about_mode = (
-            2*_SPLIT_NORMAL_MEAN_FACTOR
-            * (self.plus**4 - self.minus**4)
-            / width_sum
+            2 * _SPLIT_NORMAL_MEAN_FACTOR * (self.plus**4 - self.minus**4) / width_sum
         )
-        fourth_about_mode = 3*(self.minus**5 + self.plus**5)/width_sum
+        fourth_about_mode = 3 * (self.minus**5 + self.plus**5) / width_sum
         fourth_central_moment = (
             fourth_about_mode
-            - 4*mean_shift*third_about_mode
-            + 6*mean_shift**2*second_about_mode
-            - 3*mean_shift**4
+            - 4 * mean_shift * third_about_mode
+            + 6 * mean_shift**2 * second_about_mode
+            - 3 * mean_shift**4
         )
-        return fourth_central_moment/variance**2 - 3
+        return fourth_central_moment / variance**2 - 3
 
     def __str__(self) -> str:
         return format(self)
@@ -184,23 +184,32 @@ class a_u:
         if self.is_symmetric:
             return f"{format(self.value, fmt_spec)} ± {format(self.plus, fmt_spec)}"
         else:
-            return "%s (+%s, -%s)" % tuple(format(x, fmt_spec) for x in self.items())
+            return "{} (+{}, -{})".format(*(format(x, fmt_spec) for x in self.items()))
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.value!r}, {self.plus!r}, {self.minus!r})"
 
     def _repr_latex_(self, float_fmt="f"):
         if self.is_symmetric:
-            return f"${format(self.value, float_fmt)}" + r" \pm " + f"{format(self.plus, float_fmt)}$"
+            return (
+                f"${format(self.value, float_fmt)}"
+                r" \pm "
+                f"{format(self.plus, float_fmt)}$"
+            )
         else:
-            return "$%s^{+%s}_{-%s}$" % tuple(format(x, float_fmt) for x in self.items())
+            return "${}^{{+{}}}_{{-{}}}$".format(*(format(x, float_fmt) for x in self.items()))
 
     def pdf(self, x):
         """Evaluate the associated split-normal probability density function."""
         x_arr = np.asanyarray(x).astype(float)
-        pdf_arr =  np.piecewise(x_arr, [x_arr<self.value, x_arr>=self.value],
-                                [lambda x: np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.minus**2)),
-                                 lambda x: np.sqrt(2)/np.sqrt(np.pi)/(self.plus+self.minus) * np.exp(-1*(x-self.value)**2 / (2*self.plus**2))])
+        pdf_arr = np.piecewise(
+            x_arr,
+            [x_arr < self.value, x_arr >= self.value],
+            [
+                lambda x: np.sqrt(2) / np.sqrt(np.pi) / (self.plus + self.minus) * np.exp(-1 * (x - self.value)**2 / (2 * self.minus**2)),
+                lambda x: np.sqrt(2) / np.sqrt(np.pi) / (self.plus + self.minus) * np.exp(-1 * (x - self.value)**2 / (2 * self.plus**2)),
+            ],
+        )
         return pdf_arr.item() if np.isscalar(x) else pdf_arr
 
     def cdf(self, x):
@@ -209,14 +218,17 @@ class a_u:
         width_sum = self.plus + self.minus
         lower_cdf = (
             0.0 if self.minus == 0
-            else lambda x: self.minus/width_sum * (1 + np_erf((x-self.value)/(self.minus*np.sqrt(2))))
+            else lambda x: self.minus / width_sum * (1 + np_erf((x - self.value) / (self.minus * np.sqrt(2))))
         )
         upper_cdf = (
             1.0 if self.plus == 0
-            else lambda x: (self.minus + self.plus*np_erf((x-self.value)/(self.plus*np.sqrt(2))))/width_sum
+            else lambda x: (self.minus + self.plus * np_erf((x - self.value) / (self.plus * np.sqrt(2)))) / width_sum
         )
-        cdf_arr = np.piecewise(x_arr, [x_arr<self.value, x_arr>=self.value],
-                               [lower_cdf, upper_cdf])
+        cdf_arr = np.piecewise(
+            x_arr,
+            [x_arr < self.value, x_arr >= self.value],
+            [lower_cdf, upper_cdf]
+        )
         return cdf_arr.item() if np.isscalar(x) else cdf_arr
 
     def ppf(self, q):
@@ -238,16 +250,16 @@ class a_u:
         result[upper_endpoint] = self.value if self.plus == 0 else np.inf
 
         interior = finite & (q_arr > 0) & (q_arr < 1)
-        mode_probability = self.minus/width_sum
+        mode_probability = self.minus / width_sum
         lower = interior & (q_arr < mode_probability)
         upper = interior & ~lower
 
         if np.any(lower):
-            probability = q_arr[lower]*width_sum/(2*self.minus)
-            result[lower] = self.value + self.minus*np_ppf(probability)
+            probability = q_arr[lower] * width_sum / (2 * self.minus)
+            result[lower] = self.value + self.minus * np_ppf(probability)
         if np.any(upper):
-            tail_probability = (1 - q_arr[upper])*width_sum/(2*self.plus)
-            result[upper] = self.value - self.plus*np_ppf(tail_probability)
+            tail_probability = (1 - q_arr[upper]) * width_sum / (2 * self.plus)
+            result[upper] = self.value - self.plus * np_ppf(tail_probability)
 
         return result.item() if np.isscalar(q) else result
 
@@ -264,12 +276,12 @@ class a_u:
                 return self.value
             return np.full(size, self.value, dtype=float)
 
-        negative_side = generator.random(size=size) < self.minus/width_sum
+        negative_side = generator.random(size=size) < self.minus / width_sum
         magnitude = np.abs(generator.standard_normal(size=size))
         samples = np.where(
             negative_side,
-            self.value - self.minus*magnitude,
-            self.value + self.plus*magnitude,
+            self.value - self.minus * magnitude,
+            self.value + self.plus * magnitude,
         )
         return samples.item() if size is None else samples
 
@@ -282,7 +294,7 @@ class a_u:
             confidence = float(confidence)
             if not 0 < confidence < 1:
                 raise ValueError("confidence must lie strictly between 0 and 1")
-            n_sigma = -NormalDist().inv_cdf((1 - confidence)/2)
+            n_sigma = -NormalDist().inv_cdf((1 - confidence) / 2)
         elif n_sigma is None:
             n_sigma = 1.0
 
@@ -291,8 +303,8 @@ class a_u:
             raise ValueError("n_sigma must be a finite non-negative number")
 
         return (
-            self.value - n_sigma*self.minus,
-            self.value + n_sigma*self.plus,
+            self.value - n_sigma * self.minus,
+            self.value + n_sigma * self.plus,
         )
 
     def equal_tail_interval(self, confidence=None):
@@ -301,12 +313,12 @@ class a_u:
         The default confidence is the conventional one-sigma Gaussian probability.
         """
         if confidence is None:
-            confidence = erf(1/np.sqrt(2))
+            confidence = erf(1 / np.sqrt(2))
         confidence = float(confidence)
         if not 0 < confidence < 1:
             raise ValueError("confidence must lie strictly between 0 and 1")
 
-        tail_probability = (1 - confidence)/2
+        tail_probability = (1 - confidence) / 2
         lower = self.ppf(tail_probability)
         upper = -(-self).ppf(tail_probability)
         return lower, upper
@@ -316,8 +328,16 @@ class a_u:
 
         ``**kwargs`` are passed on to ``matplotlib`` for configuration of the resulting plot.
         """
-        neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
-        pos_x = np.linspace(self.value, self.value+(num_sigma*self.plus), discretization)
+        neg_x = np.linspace(
+            self.value - (num_sigma * self.minus),
+            self.value,
+            discretization
+        )
+        pos_x = np.linspace(
+            self.value,
+            self.value + (num_sigma * self.plus),
+            discretization
+        )
         x = np.concatenate([neg_x, pos_x])
         pdf = self.pdf(x)
         if ax is None:
@@ -329,8 +349,8 @@ class a_u:
 
         ``**kwargs`` are passed on to ``matplotlib`` for configuration of the resulting plot.
         """
-        neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
-        pos_x = np.linspace(self.value, self.value+(num_sigma*self.plus), discretization)
+        neg_x = np.linspace(self.value - (num_sigma * self.minus), self.value, discretization)
+        pos_x = np.linspace(self.value, self.value + (num_sigma * self.plus), discretization)
         x = np.concatenate([neg_x, pos_x])
         cdf = self.cdf(x)
         if ax is None:
@@ -344,15 +364,15 @@ class a_u:
         ``inplace`` is ``True``, the existing object's errors are modified in
         place. If it is ``False`` (default), a new instance is returned.
         """
-        if method=="quadrature":
+        if method == "quadrature":
             new_pos = np.hypot(self.plus, delta)
             new_neg = np.hypot(self.minus, delta)
-        elif method=="straight":
+        elif method == "straight":
             new_pos = self.plus + delta
             new_neg = self.minus + delta
-        elif method=="split":
-            new_pos = self.plus + delta/2
-            new_neg = self.minus + delta/2
+        elif method == "split":
+            new_pos = self.plus + delta / 2
+            new_neg = self.minus + delta / 2
         else:
             raise ValueError
         if inplace:
@@ -363,16 +383,16 @@ class a_u:
 
     def items(self):
         """Return a tuple of ``(value, plus, minus)``."""
-        return (self.value,self.plus,self.minus)
-    
+        return (self.value, self.plus, self.minus)
+
     def __int__(self):
         """Convert the nominal value to an integer."""
         return int(self.value)
-    
+
     def __float__(self):
         """Convert the nominal value to a float."""
         return float(self.value)
-    
+
     def __neg__(self):
         """Return the additive inverse, swapping the positive and negative uncertainties."""
         return a_u(-self.value, self.minus, self.plus)
@@ -380,9 +400,9 @@ class a_u:
     def __add__(self, other):
         """Add another value with first-order asymmetric uncertainty propagation."""
         if other is self:
-            return self*2
-        if not isinstance(other,type(self)):
-            other = a_u(other,0,0)
+            return self * 2
+        if not isinstance(other, type(self)):
+            other = a_u(other, 0, 0)
         result = self.value + other.value
         pos, neg = _propagated_errors((self, other), (1, 1))
         return a_u(result, pos, neg)
@@ -394,8 +414,8 @@ class a_u:
         """Subtract another value with first-order asymmetric uncertainty propagation."""
         if other is self:
             return a_u(0.0)
-        if not isinstance(other,type(self)):
-            other = a_u(other,0,0)
+        if not isinstance(other, type(self)):
+            other = a_u(other, 0, 0)
         result = self.value - other.value
         pos, neg = _propagated_errors((self, other), (1, -1))
         return a_u(result, pos, neg)
@@ -409,50 +429,53 @@ class a_u:
         """Multiply by another value with first-order asymmetric uncertainty propagation."""
         if other is self:
             return self**2
-        if isinstance(other,type(self)):
+        if isinstance(other, type(self)):
             pass
         else:
-            other = a_u(other,0,0)
+            other = a_u(other, 0, 0)
 
         result = self.value * other.value
         pos, neg = _propagated_errors((self, other), (other.value, self.value))
-        #print("multiplied",self,"by",other,"=",a_u(result,pos,neg))
-        return a_u(result,pos,neg)
+        return a_u(result, pos, neg)
 
     def __rmul__(self, other):
         return self * other
 
-    def __truediv__(self,other): # self divided by something
+    def __truediv__(self, other):  # self divided by something
         """Divide by another value with first-order asymmetric uncertainty propagation."""
         if other is self:
             if self.variance == 0 and self.value == 0:
                 raise ZeroDivisionError("division by zero")
             return a_u(1.0)
-        if isinstance(other,type(self)):
+        if isinstance(other, type(self)):
             pass
         else:
             other = a_u(other, 0, 0)
         result = self.value / other.value
-        pos, neg = _propagated_errors((self, other), (1/other.value, -self.value/other.value**2))
-        #print("divided",self,"by",other,"=",a_u(result,pos,neg))        
+        pos, neg = _propagated_errors(
+            (self, other),
+            (1 / other.value, -self.value / other.value**2)
+        )
         return a_u(result, pos, neg)
-    
-    def __rtruediv__(self, other): # something divided by self
-        if isinstance(other,type(self)):
+
+    def __rtruediv__(self, other):  # something divided by self
+        if isinstance(other, type(self)):
             pass
         else:
             other = a_u(other, 0, 0)
         result = other.value / self.value
-        pos, neg = _propagated_errors((other, self), (1/self.value, -other.value/self.value**2))
-        #print("divided",other,"by",self,"=",a_u(result,pos,neg))        
-        return a_u(result,pos,neg)
-    
-    def __pow__(self, other): # self to the something power
+        pos, neg = _propagated_errors(
+            (other, self),
+            (1 / self.value, -other.value / self.value**2)
+        )
+        return a_u(result, pos, neg)
+
+    def __pow__(self, other):  # self to the something power
         """Raise this value to a power with first-order asymmetric uncertainty propagation."""
         if isinstance(other, type(self)):
             exponent = other
         else:
-            exponent = a_u(other, 0., 0.)
+            exponent = a_u(other, 0, 0)
 
         exponent_is_uncertain = exponent.plus != 0 or exponent.minus != 0
         exponent_is_integer = exponent.value.is_integer()
@@ -468,7 +491,7 @@ class a_u:
 
         if exponent is self and exponent_is_uncertain:
             result = self.value**self.value
-            derivative = result*(np.log(self.value) + 1)
+            derivative = result * (np.log(self.value) + 1)
             pos, neg = _propagated_errors((self,), (derivative,))
             return a_u(result, pos, neg)
 
@@ -480,10 +503,10 @@ class a_u:
             else:
                 base_derivative = 0.0
         else:
-            base_derivative = exponent.value*self.value**(exponent.value - 1)
+            base_derivative = exponent.value * self.value**(exponent.value - 1)
 
         if exponent_is_uncertain:
-            exponent_derivative = result*np.log(self.value)
+            exponent_derivative = result * np.log(self.value)
         else:
             exponent_derivative = 0.0
 
@@ -492,8 +515,8 @@ class a_u:
             (base_derivative, exponent_derivative),
         )
         return a_u(result, pos, neg)
-    
-    def __rpow__(self, other): # something to the self power
+
+    def __rpow__(self, other):  # something to the self power
         if isinstance(other, type(self)):
             base = other
         else:
@@ -503,16 +526,15 @@ class a_u:
     def log10(self):
         """Return the base-10 logarithm with first-order propagated uncertainties."""
         result = np.log10(self.value)
-        pos = self.plus/(self.value*np.log(10))
-        neg = self.minus/(self.value*np.log(10))
-        #print("logged",self,"=",a_u(result,pos,neg))
+        pos = self.plus / (self.value * np.log(10))
+        neg = self.minus / (self.value * np.log(10))
         return a_u(result, pos, neg)
 
     def log(self):
         """Return the natural logarithm with first-order propagated uncertainties."""
         result = np.log(self.value)
-        pos = self.plus/self.value
-        neg = self.minus/self.value
+        pos = self.plus / self.value
+        neg = self.minus / self.value
         return a_u(result, pos, neg)
 
     def exp(self):
@@ -528,19 +550,23 @@ class a_u:
             pass
         else:
             other = a_u(other, 0, 0)
-        return self.value == other.value and self.plus == other.plus and self.minus == other.minus
+        return (
+            self.value == other.value
+            and self.plus == other.plus
+            and self.minus == other.minus
+        )
 
-    def __gt__(self,other): # self > other ?
+    def __gt__(self, other):  # self > other ?
         if isinstance(other, type(self)):
             return self.value > other.value
         return self.value > other
 
-    def __lt__(self, other): # self < other ?
+    def __lt__(self, other):  # self < other ?
         if isinstance(other, type(self)):
             return self.value < other.value
         return self.value < other
 
-    def __lshift__(self, other): # overloaded <<; definitively less than
+    def __lshift__(self, other):  # overloaded <<; definitively less than
         """Return whether this uncertainty interval lies entirely below the other."""
         if isinstance(other, type(self)):
             pass
@@ -548,7 +574,7 @@ class a_u:
             other = a_u(other, 0, 0)
         return self.maximum < other.minimum
 
-    def __rshift__(self, other): # overloaded >>; definitively greater than
+    def __rshift__(self, other):  # overloaded >>; definitively greater than
         """Return whether this uncertainty interval lies entirely above the other."""
         if isinstance(other, type(self)):
             pass
@@ -556,12 +582,12 @@ class a_u:
             other = a_u(other, 0, 0)
         return self.minimum > other.maximum
 
-    def __le__(self, other): # self <= other ?
+    def __le__(self, other):  # self <= other ?
         if isinstance(other, type(self)):
             return self.value <= other.value
         return self.value <= other
 
-    def __ge__(self, other): # self >= other ?
+    def __ge__(self, other):  # self >= other ?
         if isinstance(other, type(self)):
             return self.value >= other.value
         return self.value >= other
@@ -576,7 +602,7 @@ class a_u:
 
     def isna(self):
         """Return whether the nominal value is NaN or ``None``."""
-        return (np.isnan(self.value) or (self.value is None))
+        return np.isnan(self.value) or (self.value is None)
 
     def notna(self):
         """Return whether the nominal value is neither NaN nor ``None``."""
@@ -631,17 +657,22 @@ def propagate(function, *args, size=10000, rng=None):
     return function(*sampled_args)
 
 
-class AsymmetricUncertainty(a_u): # alias for legacy namespace support
+class AsymmetricUncertainty(a_u):  # alias for legacy namespace support
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        warnings.warn("class AsymmetricUncertainty has been renamed. Use a_u instead.",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "class AsymmetricUncertainty has been renamed. Use a_u instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
 
 class UncertaintyArray(list):
     """Class for representing an array of ``a_u`` objects.
 
     Mostly provides utilities for slicing and accessing various attributes.
     """
+
     def refresh(self):
         for i in range(len(self)):
             try:
@@ -649,14 +680,15 @@ class UncertaintyArray(list):
                 self[i].plus
                 self[i].minus
             except AttributeError:
-                list.__setitem__(self, i, a_u(self[i],0,0))
+                list.__setitem__(self, i, a_u(self[i], 0, 0))
 
         self.minus = [v.minus for v in self]
         self.plus = [v.plus for v in self]
         self.values = [v.value for v in self]
 
-    def __init__(self, array=[]):
-
+    def __init__(self, array=None):
+        if array is None:
+            array = []
         super().__init__(array)
         self.refresh()
 
@@ -739,12 +771,14 @@ class UncertaintyArray(list):
     def pdf(self, x):
         return np.sum([entry.pdf(x) for entry in self], axis=0)
 
+
 def pos_errors(array):
     """Standalone function to return an array of the positive errors of an array of ``a_u`` objects.
 
     Functionally equivalent to ``UncertaintyArray(array).plus``.
     """
     return [v.plus for v in array]
+
 
 def neg_errors(array):
     """Standalone function to return an array of the negative errors of an array of ``a_u`` objects.
