@@ -288,6 +288,25 @@ class TestCore(unittest.TestCase):
         self.assertAlmostEqual(left.plus, right.plus)
         self.assertAlmostEqual(left.minus, right.minus)
 
+    def test_Self_Correlation(self):
+
+        value = a_u(3.0, 0.2, 0.4)
+
+        summed = value + value
+        scaled = value * 2
+        self.assertEqual(summed.items(), scaled.items())
+        self.assertAlmostEqual(summed.variance, 4*value.variance)
+
+        independent = value + a_u(*value.items())
+        self.assertAlmostEqual(independent.variance, 2*value.variance)
+
+        difference = value - value
+        self.assertEqual(difference.items(), (0.0, 0.0, 0.0))
+
+        product = value * value
+        squared = value**2
+        self.assertEqual(product.items(), squared.items())
+
     def test_Subtraction(self):
 
         testValue_c : a_u = self.testValue_a - self.testValue_b

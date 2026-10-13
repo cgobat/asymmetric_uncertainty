@@ -12,12 +12,18 @@ An ``a_u`` value represents a jointly normalized split-normal distribution.
 The stored ``value`` is the mode of that distribution, and ``minus`` and
 ``plus`` are the Gaussian widths below and above the mode.
 
-Addition and subtraction treat the two operands as independent random
+Addition and subtraction treat distinct operands as independent random
 variables. Their exact convolution is generally not another split normal, so
 the result is approximated by a split normal with the same mean, variance, and
 third central moment as the convolution. Consequently, the returned ``value``
 need not equal the arithmetic sum or difference of the two input modes when the
 operands are asymmetric.
+
+The package recognizes the obvious fully correlated cases ``x + x``, ``x - x``,
+and ``x * x`` when both operands are the same ``a_u`` object. These reduce to
+``2*x``, an exact zero, and ``x**2``, respectively. Distinct ``a_u`` instances
+are otherwise treated as independent, even if their stored values and errors
+are identical.
 
 Multiplication, division, powers, and the logarithmic/exponential helpers use
 first-order derivative propagation about the nominal values instead. These

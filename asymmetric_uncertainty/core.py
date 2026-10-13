@@ -91,9 +91,10 @@ class a_u:
     split-normal probability distribution. The nominal value is the mode, while the plus and minus errors are
     the Gaussian widths above and below the mode, respectively.
 
-    Addition and subtraction treat operands as independent random variables and approximate their convolution
-    with another split normal matched to the first three moments. Other arithmetic operations use first-order
-    derivative propagation about the nominal values.
+    Addition and subtraction treat distinct operands as independent random variables and approximate their
+    convolution with another split normal matched to the first three moments. Reuse of the same object is
+    recognized for simple self-addition, self-subtraction, and self-multiplication. Other arithmetic operations
+    use first-order derivative propagation about the nominal values.
 
     Parameters
     ----------
@@ -386,8 +387,10 @@ class a_u:
     
     def __neg__(self):
         return a_u(-self.value,self.minus,self.plus)
-        
-    def __add__(self,other):
+
+    def __add__(self, other):
+        if other is self:
+            return self*2
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
         self_variance = self.variance
@@ -401,26 +404,30 @@ class a_u:
             self_variance + other_variance,
             self._third_central_moment + other._third_central_moment,
         )
-    
-    def __radd__(self,other):
+
+    def __radd__(self, other):
         return self + other
-    
-    def __sub__(self,other):
+
+    def __sub__(self, other):
+        if other is self:
+            return a_u(0.0)
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
         return self + (-other)
-    
-    def __rsub__(self,other):
+
+    def __rsub__(self, other):
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
         return other - self
-    
-    def __mul__(self,other):
+
+    def __mul__(self, other):
+        if other is self:
+            return self**2
         if isinstance(other,type(self)):
             pass
         else:
             other = a_u(other,0,0)
-        
+
         result = self.value * other.value
         pos, neg = _propagated_errors((self, other), (other.value, self.value))
         #print("multiplied",self,"by",other,"=",a_u(result,pos,neg))
@@ -430,6 +437,10 @@ class a_u:
         return self * other
 
     def __truediv__(self,other): # self divided by something
+        if other is self:
+            if self.variance == 0 and self.value == 0:
+                raise ZeroDivisionError("division by zero")
+            return a_u(1.0)
         if isinstance(other,type(self)):
             pass
         else:
@@ -439,7 +450,7 @@ class a_u:
         #print("divided",self,"by",other,"=",a_u(result,pos,neg))        
         return a_u(result,pos,neg)
     
-    def __rtruediv__(self,other): # something divided by self
+    def __rtruediv__(self, other): # something divided by self
         if isinstance(other,type(self)):
             pass
         else:
