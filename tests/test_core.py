@@ -259,15 +259,9 @@ class TestCore(unittest.TestCase):
 
         testValue_c : a_u = self.testValue_a + self.testValue_b
 
-        source_mean, source_variance, source_third = self._distribution_moments(self.testValue_a)
-        other_mean, other_variance, other_third = self._distribution_moments(self.testValue_b)
-        result_mean, result_variance, result_third = self._distribution_moments(testValue_c)
-
-        self.assertAlmostEqual(result_mean, source_mean + other_mean)
-        self.assertAlmostEqual(result_variance, source_variance + other_variance)
-        self.assertAlmostEqual(result_third, source_third + other_third)
-        self.assertGreater(testValue_c.plus/testValue_c.minus,
-                           self.testValue_a.plus/self.testValue_a.minus)
+        self.assertAlmostEqual(testValue_c.value, 30.0)
+        self.assertAlmostEqual(testValue_c.plus, np.sqrt(2.0))
+        self.assertAlmostEqual(testValue_c.minus, np.sqrt(8.0))
 
         shifted = self.testValue_a + 2
         self.assertAlmostEqual(shifted.value, 12.0)
@@ -359,14 +353,9 @@ class TestCore(unittest.TestCase):
 
         testValue_c : a_u = self.testValue_a - self.testValue_b
 
-        source_mean, source_variance, source_third = self._distribution_moments(self.testValue_a)
-        other_mean, other_variance, other_third = self._distribution_moments(self.testValue_b)
-        result_mean, result_variance, result_third = self._distribution_moments(testValue_c)
-
-        self.assertAlmostEqual(result_mean, source_mean - other_mean)
-        self.assertAlmostEqual(result_variance, source_variance + other_variance)
-        self.assertAlmostEqual(result_third, source_third - other_third)
-        self.assertAlmostEqual(testValue_c.plus, testValue_c.minus)
+        self.assertAlmostEqual(testValue_c.value, -10.0)
+        self.assertAlmostEqual(testValue_c.plus, np.sqrt(5.0))
+        self.assertAlmostEqual(testValue_c.minus, np.sqrt(5.0))
 
         shifted = 2 - self.testValue_a
         self.assertAlmostEqual(shifted.value, -8.0)

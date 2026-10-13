@@ -56,5 +56,11 @@ or symmetric form:
 The symmetric string form accepted by the package uses the Unicode plus-minus
 symbol (``±``); for example, ``a_u("3.0 ± 0.3")``.
 
+Arithmetic applies the ordinary operation to the nominal values and propagates
+the positive and negative uncertainties locally with first-order derivatives
+and quadrature. Distribution methods such as ``pdf()``, ``cdf()``, and
+``rvs()`` additionally interpret the same three stored values as the mode and
+two Gaussian widths of a split-normal distribution.
+
 See the :doc:`api` for the complete public interface and
 :doc:`special_features` for additional behavior.

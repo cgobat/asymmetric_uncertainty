@@ -21,7 +21,9 @@ This repository contains the `asymmetric_uncertainty` Python package, which prov
 4.0 (+0.2, -0.4)
 ```
 
-Here we see how to create an instance of the class representing the example number given before: $3.0_{-0.4}^{+0.2}$. The initialization arguments are the nominal value, positive error, and negative error&mdash;in that order. `x` will play nicely with other numeric objects under most mathematical operations, and its errors will propagate appropriately. More complete examples can be found in the [`example.ipynb`](./example.ipynb) Jupyter notebook.
+Here we see how to create an instance of the class representing the example number given before: $3.0_{-0.4}^{+0.2}$. The initialization arguments are the nominal value, positive error, and negative error&mdash;in that order. `x` will play nicely with other numeric objects under most mathematical operations: nominal values follow ordinary arithmetic, while the uncertainties are propagated locally with first-order derivatives and quadrature.
+
+For probability-distribution utilities and Monte Carlo sampling, the same three numbers are interpreted as the mode and two Gaussian widths of a normalized split-normal distribution. Ordinary arithmetic does not claim to propagate that full probability distribution. More complete examples can be found in the [`example.ipynb`](./example.ipynb) Jupyter notebook.
 
 ## Installation
 
@@ -39,4 +41,4 @@ The documentation for this package is hosted on [ReadTheDocs](https://asymmetric
 
 If you make use of this package in your own work, please cite it by referencing its entry in ASCL, the Astrophysics Source Code Library: [ascl:2208.005](http://ascl.net/2208.005). Citation information can also be exported from ADS/SciX ([2022ascl.soft08005G](https://scixplorer.org/abs/2022ascl.soft08005G/exportcitation)) or the sidebar of this repository.
 
-[^1]: Definitions and conventions for what this means vary. Common uses/interpretations include standard deviation, standard deviation divided by the square root of the number of samples (often called standard error), 90% confidence interval, etc. As long as usage is consistent and intentions are clear, any of these are valid.
+[^1]: Definitions and conventions for what this means vary. Common uses include standard deviation, standard error, and confidence or credible intervals. Although these interpretations are not statistically interchangeable, they can all be valid as long as usage is consistent and intentions are clear. Ordinary arithmetic in this package propagates the quoted upper and lower uncertainties without assigning them a unique probabilistic meaning; however, the distribution utilities specifically interpret them as the Gaussian widths ($\sigma$) of a split-normal distribution.

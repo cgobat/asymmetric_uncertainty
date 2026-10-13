@@ -25,51 +25,6 @@ _SPLIT_NORMAL_VARIANCE_FACTOR = 3/4 - 2/np.pi
 _SPLIT_NORMAL_THIRD_MOMENT_FACTOR = 6/np.pi - 2
 
 
-def _split_normal_shape_from_moments(variance, third_moment):
-    """Return split-normal ``(plus, minus)`` widths matching two central moments."""
-    if variance < 0:
-        raise ValueError("variance must be non-negative")
-    if variance == 0:
-        if third_moment != 0:
-            raise ValueError("a zero-variance distribution cannot have a non-zero third central moment")
-        return 0.0, 0.0
-
-    max_width_diff = np.sqrt(variance/(1 - 2/np.pi))
-
-    def moment_for_width_diff(width_diff):
-        return (
-            _SPLIT_NORMAL_MEAN_FACTOR
-            * width_diff
-            * (variance + _SPLIT_NORMAL_THIRD_MOMENT_FACTOR*width_diff**2)
-        )
-
-    max_third_moment = moment_for_width_diff(max_width_diff)
-    if np.abs(third_moment) > max_third_moment:
-        if np.isclose(np.abs(third_moment), max_third_moment, rtol=1e-12, atol=0):
-            width_diff = np.sign(third_moment)*max_width_diff
-        else:
-            raise ValueError("moments cannot be represented by a split normal")
-    elif third_moment == 0:
-        width_diff = 0.0
-    else:
-        lower = -max_width_diff
-        upper = max_width_diff
-        for _ in range(80):
-            width_diff = (lower + upper)/2
-            if moment_for_width_diff(width_diff) < third_moment:
-                lower = width_diff
-            else:
-                upper = width_diff
-        width_diff = (lower + upper)/2
-
-    width_sum = 2*np.sqrt(
-        max(0.0, variance - _SPLIT_NORMAL_VARIANCE_FACTOR*width_diff**2)
-    )
-    minus = max(0.0, (width_sum - width_diff)/2)
-    plus = max(0.0, (width_sum + width_diff)/2)
-    return plus, minus
-
-
 def _propagated_errors(operands, derivatives):
     """Return first-order asymmetric errors for the supplied partial derivatives."""
     pos_terms = []
@@ -87,34 +42,34 @@ def _propagated_errors(operands, derivatives):
 
 class a_u:
     """
-    Class for representing and handling propagation of asymmetric uncertainties
-    using a jointly normalized split-normal probability distribution. The
-    nominal value is the mode, while the plus and minus errors are the Gaussian
-    widths above and below the mode, respectively.
+    Class for representing and propagating numeric values with asymmetric
+    uncertainties. Arithmetic operates on the nominal values and propagates the
+    positive and negative uncertainties independently using first-order
+    derivatives and quadrature. Reuse of the same object is recognized for
+    simple self-addition, subtraction, multiplication, division, and
+    exponentiation.
 
-    Addition and subtraction treat distinct operands as independent random
-    variables and approximate their convolution with another split normal
-    matched to the first three moments. Reuse of the same object is recognized
-    for simple self-addition, subtraction, multiplication, division, and
-    exponentiation. Other arithmetic operations use first-order derivative
-    propagation about the nominal values.
+    Distribution utilities interpret the nominal value as the mode and the
+    positive and negative uncertainties as the two Gaussian widths of an
+    associated jointly normalized split-normal distribution. Arithmetic does
+    not attempt to convolve or transform that probability distribution.
 
     Parameters
     ----------
-    numeric : nominal
+    nominal : numeric
         the nominal value of the represented quantity
-    numeric : pos_err
+    pos_err : numeric
         the plus error on the value
-    numeric : neg_err
+    neg_err : numeric
         the minus error on the value
 
     Attributes
     ----------
-    numeric : value
+    value : numeric
         the nominal value of the represented quantity
-    numeric : plus
+    plus : numeric
         the positive error on the value
-    numeric : plus
+    minus : numeric
         the negative error on the value
     """
     
@@ -156,24 +111,24 @@ class a_u:
 
     @property
     def mean(self):
-        """Mean of the represented split-normal distribution."""
+        """Mean of the associated split-normal distribution."""
         return self.value + _SPLIT_NORMAL_MEAN_FACTOR*(self.plus - self.minus)
 
     @property
     def median(self):
-        """Median of the represented split-normal distribution."""
+        """Median of the associated split-normal distribution."""
         return self.ppf(0.5)
 
     @property
     def variance(self):
-        """Variance of the represented split-normal distribution."""
+        """Variance of the associated split-normal distribution."""
         width_sum = self.plus + self.minus
         width_diff = self.plus - self.minus
         return (width_sum**2)/4 + _SPLIT_NORMAL_VARIANCE_FACTOR*width_diff**2
 
     @property
     def std(self):
-        """Standard deviation of the represented split-normal distribution."""
+        """Standard deviation of the associated split-normal distribution."""
         return np.sqrt(self.variance)
 
     @property
@@ -187,7 +142,7 @@ class a_u:
 
     @property
     def skewness(self):
-        """Standardized third central moment of the represented distribution."""
+        """Standardized third central moment of the associated split-normal distribution."""
         variance = self.variance
         if variance == 0:
             return np.nan
@@ -195,7 +150,7 @@ class a_u:
 
     @property
     def kurtosis(self):
-        """Fisher (excess) kurtosis of the represented split-normal distribution."""
+        """Fisher (excess) kurtosis of the associated split-normal distribution."""
         variance = self.variance
         if variance == 0:
             return np.nan
@@ -216,13 +171,6 @@ class a_u:
             - 3*mean_shift**4
         )
         return fourth_central_moment/variance**2 - 3
-
-    @classmethod
-    def _from_moments(cls, mean, variance, third_moment):
-        """Construct a split normal matching the supplied first three moments."""
-        plus, minus = _split_normal_shape_from_moments(variance, third_moment)
-        value = mean - _SPLIT_NORMAL_MEAN_FACTOR*(plus - minus)
-        return cls(value, plus, minus)
 
     def __str__(self):
         return f"{self}"
@@ -268,7 +216,7 @@ class a_u:
         return cdf_arr.item() if np.isscalar(x) else cdf_arr
     
     def ppf(self, q):
-        """Return quantiles of the represented split-normal distribution."""
+        """Return quantiles of the associated split-normal distribution."""
         q_arr = np.asanyarray(q).astype(float)
         finite = np.isfinite(q_arr)
         if np.any((q_arr[finite] < 0) | (q_arr[finite] > 1)):
@@ -300,7 +248,7 @@ class a_u:
         return result.item() if np.isscalar(q) else result
 
     def rvs(self, size=None, rng=None):
-        """Draw random values from the represented split-normal distribution."""
+        """Draw random values from the associated split-normal distribution."""
         if isinstance(rng, np.random.Generator):
             generator = rng
         else:
@@ -427,17 +375,9 @@ class a_u:
             return self*2
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
-        self_variance = self.variance
-        other_variance = other.variance
-        if self_variance == 0:
-            return a_u(self.value + other.value, other.plus, other.minus)
-        if other_variance == 0:
-            return a_u(self.value + other.value, self.plus, self.minus)
-        return a_u._from_moments(
-            self.mean + other.mean,
-            self_variance + other_variance,
-            self._third_central_moment + other._third_central_moment,
-        )
+        result = self.value + other.value
+        pos, neg = _propagated_errors((self, other), (1, 1))
+        return a_u(result, pos, neg)
 
     def __radd__(self, other):
         return self + other
@@ -447,7 +387,9 @@ class a_u:
             return a_u(0.0)
         if not isinstance(other,type(self)):
             other = a_u(other,0,0)
-        return self + (-other)
+        result = self.value - other.value
+        pos, neg = _propagated_errors((self, other), (1, -1))
+        return a_u(result, pos, neg)
 
     def __rsub__(self, other):
         if not isinstance(other,type(self)):
@@ -635,7 +577,7 @@ class a_u:
 
 def propagate(function, *args, size=10000, rng=None):
     """
-    Evaluate a callable on Monte Carlo samples drawn from ``a_u`` arguments.
+    Evaluate a callable on split-normal samples drawn from ``a_u`` arguments.
 
     Each distinct ``a_u`` object is sampled once, so passing the same object
     more than once preserves perfect correlation. Separate objects are sampled

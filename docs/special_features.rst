@@ -8,16 +8,34 @@ features.
 Propagation model
 -----------------
 
-An ``a_u`` value represents a jointly normalized split-normal distribution.
-The stored ``value`` is the mode of that distribution, and ``minus`` and
-``plus`` are the Gaussian widths below and above the mode.
+An ``a_u`` object is primarily a nominal numeric value with separate positive
+and negative uncertainties. Arithmetic applies the ordinary operation to the
+nominal values, so, for example, values of 2 and 3 always add to a value of 5.
+Distinct operands are treated as independent when their uncertainty
+contributions are combined in quadrature to first order. The sign of each local
+derivative determines which side of an operand contributes to the positive and
+negative uncertainty of the result.
 
-Addition and subtraction treat distinct operands as independent random
-variables. Their exact convolution is generally not another split normal, so
-the result is approximated by a split normal with the same mean, variance, and
-third central moment as the convolution. Consequently, the returned ``value``
-need not equal the arithmetic sum or difference of the two input modes when the
-operands are asymmetric.
+For independent operands this gives, for example,
+
+.. math::
+
+   \sigma_{+,A+B}^2 = \sigma_{+,A}^2 + \sigma_{+,B}^2,
+   \qquad
+   \sigma_{-,A+B}^2 = \sigma_{-,A}^2 + \sigma_{-,B}^2,
+
+and
+
+.. math::
+
+   \sigma_{+,A-B}^2 = \sigma_{+,A}^2 + \sigma_{-,B}^2,
+   \qquad
+   \sigma_{-,A-B}^2 = \sigma_{-,A}^2 + \sigma_{+,B}^2.
+
+The same first-order convention is used for multiplication, division, powers,
+and the logarithmic/exponential helpers. Arithmetic therefore propagates the
+quoted local uncertainties; it does **not** claim to reproduce the convolution
+or nonlinear transformation of a probability density.
 
 The package recognizes the obvious fully correlated cases ``x + x``, ``x - x``,
 ``x * x``, ``x / x``, and ``x ** x`` when both operands are the same ``a_u``
@@ -25,21 +43,21 @@ object. These reduce to ``2*x``, an exact zero, ``x**2``, an exact one (except
 exact zero divided by itself), and propagation through the single-variable
 function ``x**x``, respectively.
 
-Multiplication, division, powers, and the logarithmic/exponential helpers use
-first-order derivative propagation about the nominal values instead. These
-operations therefore propagate the quoted local uncertainty rather than
-attempting to reproduce the full transformed probability distribution.
-
 Distribution utilities
 ----------------------
 
+For distributional calculations, ``value`` is interpreted as the mode and
+``minus`` and ``plus`` as the Gaussian widths of an associated jointly
+normalized split-normal distribution. This is a choice for the interpretation
+of the stored value and uncertainties rather than a propagation model used by
+ordinary arithmetic.
+
 The analytic :meth:`~asymmetric_uncertainty.a_u.cdf` is complemented by
 :meth:`~asymmetric_uncertainty.a_u.ppf`, which evaluates the inverse CDF, and
-:meth:`~asymmetric_uncertainty.a_u.rvs`, which draws random values from the
-same jointly normalized split-normal distribution. Sampling uses the unequal
-probability mass on either side of the mode, so the fraction of samples below
-``value`` is ``minus / (minus + plus)`` rather than one half for an asymmetric
-value.
+:meth:`~asymmetric_uncertainty.a_u.rvs`, which draws random values from that
+associated split-normal distribution. Sampling uses the unequal probability
+mass on either side of the mode, so the fraction of samples below ``value`` is
+``minus / (minus + plus)`` rather than one half for an asymmetric value.
 
 ``rvs`` accepts either a seed or a :class:`numpy.random.Generator` through its
 ``rng`` argument, allowing reproducible simulations without introducing a
@@ -63,11 +81,11 @@ general centered on ``value``.
 Monte Carlo propagation
 -----------------------
 
-The :func:`~asymmetric_uncertainty.propagate` function provides an optional
-Monte Carlo route for checking nonlinear propagation without changing the
-behavior of the arithmetic operators. It replaces each ``a_u`` argument with
-samples drawn from its split-normal distribution and evaluates a supplied
-callable on those arrays. For example:
+The :func:`~asymmetric_uncertainty.propagate` function provides an explicit
+Monte Carlo route when the split-normal interpretation should be propagated as
+a probability distribution rather than as local asymmetric uncertainties. It
+replaces each ``a_u`` argument with samples drawn from its split-normal
+distribution and evaluates a supplied callable on those arrays. For example:
 
 .. code-block:: python
 
@@ -76,8 +94,8 @@ callable on those arrays. For example:
 The raw return value from the callable is returned directly; ``propagate`` does
 not fit the Monte Carlo result back to an ``a_u`` object. This makes the
 function useful for diagnostics and direct comparison with the package's
-analytic or first-order propagation rules without imposing another
-approximation on the sampled output.
+first-order arithmetic without imposing another approximation on the sampled
+output.
 
 Each distinct ``a_u`` object is sampled once per call. Passing the same object
 multiple times therefore reuses the same sample realization and preserves

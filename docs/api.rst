@@ -35,24 +35,24 @@ The principal scalar attributes are:
    :func:`numpy.isclose` tolerance.
 
 ``mean``
-   Mean of the represented split-normal distribution. For asymmetric errors,
+   Mean of the associated split-normal distribution. For asymmetric errors,
    this generally differs from ``value``, which is the mode.
 
 ``median``
-   Median of the represented split-normal distribution.
+   Median of the associated split-normal distribution.
 
 ``variance``
-   Variance of the represented split-normal distribution.
+   Variance of the associated split-normal distribution.
 
 ``std``
-   Standard deviation of the represented split-normal distribution.
+   Standard deviation of the associated split-normal distribution.
 
 ``skewness``
-   Standardized third central moment of the represented split-normal
+   Standardized third central moment of the associated split-normal
    distribution. This is ``nan`` for an exact, zero-variance value.
 
 ``kurtosis``
-   Fisher (excess) kurtosis of the represented split-normal distribution. A
+   Fisher (excess) kurtosis of the associated split-normal distribution. A
    Gaussian has kurtosis 0; an exact, zero-variance value has ``nan`` kurtosis.
 
 ``UncertaintyArray``

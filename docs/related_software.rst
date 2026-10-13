@@ -5,15 +5,16 @@ Several packages address asymmetric uncertainties, but the notation
 :math:`x_{-\sigma_-}^{+\sigma_+}` does not by itself specify a unique
 statistical model. The quoted bounds may represent widths of an assumed
 probability distribution, confidence or credible intervals, or intervals
-inferred from a likelihood function. Packages that accept superficially
-similar inputs therefore need not be statistically interchangeable.
+inferred from a likelihood function. Packages that accept superficially similar
+inputs therefore need not be statistically interchangeable.
 
-``asymmetric_uncertainty`` treats ``value`` as the mode of a jointly normalized
-split-normal distribution and ``minus`` and ``plus`` as its Gaussian widths on
-the two sides of the mode. Addition and subtraction of independent values are
-approximated by matching the first three moments of the convolution to another
-split normal; nonlinear arithmetic uses first-order derivative propagation.
-The packages below cover related use cases with different statistical models or
+``asymmetric_uncertainty`` is primarily a numeric type with potentially
+separate upper and lower uncertainties. Arithmetic preserves ordinary
+nominal-value semantics and propagates the two uncertainty sides with
+first-order derivatives and quadrature. Distribution utilities additionally
+provide a split-normal interpretation in which ``value`` is the mode and
+``minus`` and ``plus`` are the Gaussian widths on the two sides. The packages
+below cover related use cases with different statistical models and/or
 propagation strategies.
 
 .. list-table::
@@ -28,14 +29,14 @@ propagation strategies.
      - Barlow's Linear Variable Width Gaussian [2]_, with uncertainties specified
        at a chosen confidence level.
      - Monte Carlo sampling for arithmetic and user-defined functions.
-     - Uses a Barlow variable-width model and numerical sampling rather than a
-       split-normal object with primarily analytic/local propagation.
+     - Uses a Barlow variable-width model and numerical sampling rather than
+       local asymmetric-error propagation with optional split-normal utilities.
    * - `add_asym <https://github.com/anisotropela/add_asym>`_
      - Linear or quadratic transformed-Gaussian models following Barlow (2003). [1]_
      - Deterministic moment-based combination of independent asymmetric errors.
-     - Specialized for addition rather than providing a general numeric type or
-       arbitrary arithmetic. Its treatment of moments is the closest conceptual
-       relative of this package's addition/subtraction model.
+     - Specialized for statistically motivated combination by addition rather
+       than providing a general numeric type whose nominal values obey ordinary
+       arithmetic semantics.
    * - `SOAD <https://github.com/kiyami/soad>`_
      - Barlow Variable Gaussian representation. [2]_
      - Monte Carlo propagation through arithmetic operations, with fitted output
@@ -88,13 +89,6 @@ The widely used `uncertainties <https://pythonhosted.org/uncertainties/>`_
 package is also relevant as a symmetric-error counterpart. It propagates
 standard deviations using derivatives and tracks correlations between derived
 quantities, but it does not represent separate upper and lower uncertainties.
-
-The moment-matching approach used here for independent addition and subtraction
-is closest in motivation to ``add_asym`` and Barlow's work on combining
-asymmetric errors. [1]_ The implementation remains different: the result is
-projected back into the split-normal family already used by
-``asymmetric_uncertainty`` rather than adopting Barlow's transformed-Gaussian or
-variable-width-Gaussian parameterizations.
 
 .. rubric:: References
 

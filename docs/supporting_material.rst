@@ -6,11 +6,11 @@ Supporting material and further reading
   of Starling et al. (2008). [1]_ The methodology presented there partially
   inspired the creation of this package.
 
-* Broader treatments of asymmetric errors and their combination are given by
-  Barlow (2003) [2]_ and Barlow (2004). [3]_ The moment-based treatment of
-  independent addition and subtraction in this package is related to the
-  cumulant-matching approach described by Barlow (2003), while retaining the
-  split-normal distribution mentioned above and used throughout this package.
+* Broader treatments of asymmetric errors and their statistical combination
+  are given by Barlow (2003) [2]_ and Barlow (2004). [3]_ These approaches are
+  useful context for the problem of asymmetric errors, but this package's
+  ordinary arithmetic instead preserves nominal-value operations and uses
+  first-order propagation of the quoted upper and lower uncertainties.
 
 * See :doc:`related_software` for a comparison with other packages that model or
   propagate asymmetric uncertainties.
