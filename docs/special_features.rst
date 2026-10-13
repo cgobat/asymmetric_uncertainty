@@ -20,10 +20,10 @@ need not equal the arithmetic sum or difference of the two input modes when the
 operands are asymmetric.
 
 The package recognizes the obvious fully correlated cases ``x + x``, ``x - x``,
-and ``x * x`` when both operands are the same ``a_u`` object. These reduce to
-``2*x``, an exact zero, and ``x**2``, respectively. Distinct ``a_u`` instances
-are otherwise treated as independent, even if their stored values and errors
-are identical.
+``x * x``, ``x / x``, and ``x ** x`` when both operands are the same ``a_u``
+object. These reduce to ``2*x``, an exact zero, ``x**2``, an exact one (except
+exact zero divided by itself), and propagation through the single-variable
+function ``x**x``, respectively.
 
 Multiplication, division, powers, and the logarithmic/exponential helpers use
 first-order derivative propagation about the nominal values instead. These
