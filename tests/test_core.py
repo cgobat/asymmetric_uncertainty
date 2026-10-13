@@ -307,6 +307,20 @@ class TestCore(unittest.TestCase):
         squared = value**2
         self.assertEqual(product.items(), squared.items())
 
+        ratio = value / value
+        self.assertEqual(ratio.items(), (1.0, 0.0, 0.0))
+
+        zero = a_u(0.0)
+        with self.assertRaises(ZeroDivisionError):
+            zero / zero
+
+        power = value**value
+        derivative = value.value**value.value * (np.log(value.value) + 1)
+
+        self.assertAlmostEqual(power.value, value.value**value.value)
+        self.assertAlmostEqual(power.plus, derivative*value.plus)
+        self.assertAlmostEqual(power.minus, derivative*value.minus)
+
     def test_Subtraction(self):
 
         testValue_c : a_u = self.testValue_a - self.testValue_b
