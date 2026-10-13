@@ -14,6 +14,11 @@
 from math import erf
 import unittest
 import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 from asymmetric_uncertainty import UncertaintyArray, a_u, propagate
 
 if hasattr(np, "trapz") and not hasattr(np, "trapezoid"):
@@ -174,6 +179,19 @@ class TestCore(unittest.TestCase):
             )
         self.assertEqual(right_sided.cdf(right_sided.ppf(0.0)), 0.0)
         self.assertEqual(left_sided.cdf(left_sided.ppf(1.0)), 1.0)
+
+    def test_Plotting(self):
+        for plot in (self.testValue.pdfplot, self.testValue.cdfplot):
+            plot(discretization=10)
+            figure = plt.gcf()
+            self.assertEqual(len(figure.axes), 1)
+            self.assertEqual(len(figure.axes[0].lines), 1)
+            plt.close(figure)
+
+            figure, ax = plt.subplots()
+            plot(discretization=10, ax=ax)
+            self.assertEqual(len(ax.lines), 1)
+            plt.close(figure)
 
     def test_PPF(self):
 
