@@ -26,7 +26,7 @@ _SPLIT_NORMAL_VARIANCE_FACTOR = 3 / 4 - 2 / np.pi
 _SPLIT_NORMAL_THIRD_MOMENT_FACTOR = 6 / np.pi - 2
 
 
-def _propagated_errors(operands, derivatives):
+def _propagated_errors(operands, derivatives) -> tuple[float, float]:
     """Return first-order asymmetric errors for the supplied partial derivatives."""
     pos_terms = []
     neg_terms = []
@@ -96,17 +96,17 @@ class a_u:
             self.minus = abs(float(neg_err))
 
     @property
-    def maximum(self):
+    def maximum(self) -> float:
         """Return the nominal value plus the positive uncertainty."""
         return self.value + self.plus
 
     @property
-    def minimum(self):
+    def minimum(self) -> float:
         """Return the nominal value minus the negative uncertainty."""
         return self.value - self.minus
 
     @property
-    def sign(self):
+    def sign(self) -> int:
         """Return 1 for a non-negative nominal value and -1 otherwise."""
         return 1 if self.value >= 0 else -1
 
@@ -116,29 +116,29 @@ class a_u:
         return bool(np.isclose(self.plus, self.minus))
 
     @property
-    def mean(self):
+    def mean(self) -> float:
         """Mean of the associated split-normal distribution."""
         return self.value + _SPLIT_NORMAL_MEAN_FACTOR * (self.plus - self.minus)
 
     @property
-    def median(self):
+    def median(self) -> float:
         """Median of the associated split-normal distribution."""
         return self.ppf(0.5)
 
     @property
-    def variance(self):
+    def variance(self) -> float:
         """Variance of the associated split-normal distribution."""
         width_sum = self.plus + self.minus
         width_diff = self.plus - self.minus
         return (width_sum**2) / 4 + _SPLIT_NORMAL_VARIANCE_FACTOR * width_diff**2
 
     @property
-    def std(self):
+    def std(self) -> float:
         """Standard deviation of the associated split-normal distribution."""
         return np.sqrt(self.variance)
 
     @property
-    def _third_central_moment(self):
+    def _third_central_moment(self) -> float:
         """Third central moment of the associated split-normal distribution."""
         width_diff = self.plus - self.minus
         return (
@@ -148,7 +148,7 @@ class a_u:
         )
 
     @property
-    def skewness(self):
+    def skewness(self) -> float:
         """Standardized third central moment of the associated split-normal distribution."""
         variance = self.variance
         if variance == 0:
@@ -156,7 +156,7 @@ class a_u:
         return self._third_central_moment / variance**1.5
 
     @property
-    def kurtosis(self):
+    def kurtosis(self) -> float:
         """Fisher (excess) kurtosis of the associated split-normal distribution."""
         variance = self.variance
         if variance == 0:
@@ -381,15 +381,15 @@ class a_u:
         else:
             return a_u(self.value, new_pos, new_neg)
 
-    def items(self):
+    def items(self) -> tuple[float, float, float]:
         """Return a tuple of ``(value, plus, minus)``."""
         return (self.value, self.plus, self.minus)
 
-    def __int__(self):
+    def __int__(self) -> int:
         """Convert the nominal value to an integer."""
         return int(self.value)
 
-    def __float__(self):
+    def __float__(self) -> float:
         """Convert the nominal value to a float."""
         return float(self.value)
 
@@ -556,17 +556,17 @@ class a_u:
             and self.minus == other.minus
         )
 
-    def __gt__(self, other):  # self > other ?
+    def __gt__(self, other) -> bool:  # self > other ?
         if isinstance(other, type(self)):
             return self.value > other.value
         return self.value > other
 
-    def __lt__(self, other):  # self < other ?
+    def __lt__(self, other) -> bool:  # self < other ?
         if isinstance(other, type(self)):
             return self.value < other.value
         return self.value < other
 
-    def __lshift__(self, other):  # overloaded <<; definitively less than
+    def __lshift__(self, other) -> bool:  # overloaded <<; definitively less than
         """Return whether this uncertainty interval lies entirely below the other."""
         if isinstance(other, type(self)):
             pass
@@ -574,7 +574,7 @@ class a_u:
             other = a_u(other, 0, 0)
         return self.maximum < other.minimum
 
-    def __rshift__(self, other):  # overloaded >>; definitively greater than
+    def __rshift__(self, other) -> bool:  # overloaded >>; definitively greater than
         """Return whether this uncertainty interval lies entirely above the other."""
         if isinstance(other, type(self)):
             pass
@@ -582,12 +582,12 @@ class a_u:
             other = a_u(other, 0, 0)
         return self.minimum > other.maximum
 
-    def __le__(self, other):  # self <= other ?
+    def __le__(self, other) -> bool:  # self <= other ?
         if isinstance(other, type(self)):
             return self.value <= other.value
         return self.value <= other
 
-    def __ge__(self, other):  # self >= other ?
+    def __ge__(self, other) -> bool:  # self >= other ?
         if isinstance(other, type(self)):
             return self.value >= other.value
         return self.value >= other
@@ -596,15 +596,15 @@ class a_u:
         """Return the real-valued nominal value unchanged by conjugation."""
         return self.value
 
-    def __isfinite__(self):
+    def __isfinite__(self) -> bool:
         """Return whether the nominal value and both uncertainties are finite."""
         return all(np.isfinite(self.items()))
 
-    def isna(self):
+    def isna(self) -> bool:
         """Return whether the nominal value is NaN or ``None``."""
         return np.isnan(self.value) or (self.value is None)
 
-    def notna(self):
+    def notna(self) -> bool:
         """Return whether the nominal value is neither NaN nor ``None``."""
         return not self.isna()
 
@@ -693,11 +693,11 @@ class UncertaintyArray(list):
         self.refresh()
 
     @property
-    def as_list(self):
+    def as_list(self) -> list:
         return self
 
     @property
-    def as_numpy(self):
+    def as_numpy(self) -> np.ndarray:
         return np.asarray(self)
 
     @property
@@ -708,13 +708,13 @@ class UncertaintyArray(list):
     def ndim(self) -> int:
         return self.as_numpy.ndim
 
-    def flatten(self):
+    def flatten(self) -> np.ndarray:
         return self.as_numpy.flatten()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str([str(entry) for entry in self])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
     def append(self, entry):

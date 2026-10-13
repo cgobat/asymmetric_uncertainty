@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asymmetric_uncertainty"
-version = "0.5.0"
+version = "0.5.1.dev0"
 authors = [
     { name = "Caden Gobat", email = "cgobat@gwu.edu" },
 ]
 description = "A package that provides a class for representing numeric quantities with asymmetric uncertainties."
 readme = "README.md"
 license = "GPL-3.0-or-later"
+requires-python = ">=3.9"
 dependencies = [
     "numpy",
     "matplotlib",
