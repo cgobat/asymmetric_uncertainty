@@ -330,38 +330,40 @@ class a_u:
         upper = -(-self).ppf(tail_probability)
         return lower, upper
 
-    def pdfplot(self,num_sigma=5,discretization=100,**kwargs):
+    def pdfplot(self, num_sigma=5, discretization=100, ax=None, **kwargs):
         """
         Plots the associated PDF over the specified number of sigma, using 2*`discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
         pos_x = np.linspace(self.value, self.value+(num_sigma*self.plus), discretization)
-        x = np.array(list(neg_x)+list(pos_x))
+        x = np.concat([neg_x, pos_x])
         pdf = self.pdf(x)
-        plt.plot(x,pdf,**kwargs)
-        plt.show()
-        
-    def cdfplot(self,num_sigma=5,discretization=100,**kwargs):
+        if ax is None:
+            ax = plt.axes()
+        ax.plot(x, pdf, **kwargs)
+
+    def cdfplot(self, num_sigma=5, discretization=100, ax=None, **kwargs):
         """
         Plots the associated CDF over the specified number of sigma, using 2*`discretization` points.
         `**kwargs` are passed on to `matplotlib` for configuration of the resulting plot.
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
         pos_x = np.linspace(self.value, self.value+(num_sigma*self.plus), discretization)
-        x = np.array(list(neg_x)+list(pos_x))
+        x = np.concat([neg_x, pos_x])
         cdf = self.cdf(x)
-        plt.plot(x,cdf,**kwargs)
-        plt.show()
-        
+        if ax is None:
+            ax = plt.axes()
+        ax.plot(x, cdf, **kwargs)
+
     def add_error(self, delta, method="quadrature", inplace=False):
         """
         Adds `delta` to an instance's existing error. Possible `method`s are `quadrature`, `straight`, or `split`.
         If `inplace` is `True`, the existing object's errors are modified in place. If it is `False`, a new instance is returned.
         """
         if method=="quadrature":
-            new_pos = np.sqrt(self.plus**2 + delta**2)
-            new_neg = np.sqrt(self.minus**2 + delta**2)
+            new_pos = np.hypot(self.plus, delta)
+            new_neg = np.hypot(self.minus, delta)
         elif method=="straight":
             new_pos = self.plus + delta
             new_neg = self.minus + delta
