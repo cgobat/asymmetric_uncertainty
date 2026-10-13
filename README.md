@@ -17,7 +17,8 @@ This repository contains the `asymmetric_uncertainty` Python package, which prov
 >>> x = a_u(3.0, 0.2, 0.4)
 >>> print(x + 1)
 ```
-```
+
+```plaintext
 4.0 (+0.2, -0.4)
 ```
 
@@ -27,7 +28,11 @@ For probability-distribution utilities and Monte Carlo sampling, the same three 
 
 ## Installation
 
-If you have a local installation of Git, you can install this package with a single command: run `pip install git+https://github.com/cgobat/asymmetric_uncertainty.git` to install the latest version.
+If you have a local installation of git, you can install this package with a single command:
+
+```shell
+pip install git+https://github.com/cgobat/asymmetric_uncertainty.git
+```
 
 Otherwise, clone/download this repository, then (from a command line running within the associated directory) run `python -m pip install .`.
 
