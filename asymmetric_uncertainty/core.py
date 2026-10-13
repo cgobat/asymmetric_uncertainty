@@ -312,26 +312,26 @@ class a_u:
         return lower, upper
 
     def pdfplot(self, num_sigma=5, discretization=100, ax=None, **kwargs):
-        """Plot the associated PDF over the specified number of sigma, using 2*`discretization` points.
+        """Plot the associated PDF over the specified number of sigma, using ``2*discretization`` points.
 
         ``**kwargs`` are passed on to ``matplotlib`` for configuration of the resulting plot.
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
         pos_x = np.linspace(self.value, self.value+(num_sigma*self.plus), discretization)
-        x = np.concat([neg_x, pos_x])
+        x = np.concatenate([neg_x, pos_x])
         pdf = self.pdf(x)
         if ax is None:
             ax = plt.axes()
         ax.plot(x, pdf, **kwargs)
 
     def cdfplot(self, num_sigma=5, discretization=100, ax=None, **kwargs):
-        """Plot the associated CDF over the specified number of sigma, using 2*`discretization` points.
+        """Plot the associated CDF over the specified number of sigma, using ``2*discretization`` points.
 
         ``**kwargs`` are passed on to ``matplotlib`` for configuration of the resulting plot.
         """
         neg_x = np.linspace(self.value-(num_sigma*self.minus), self.value, discretization)
         pos_x = np.linspace(self.value, self.value+(num_sigma*self.plus), discretization)
-        x = np.concat([neg_x, pos_x])
+        x = np.concatenate([neg_x, pos_x])
         cdf = self.cdf(x)
         if ax is None:
             ax = plt.axes()
