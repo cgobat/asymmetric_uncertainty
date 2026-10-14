@@ -252,9 +252,11 @@ height is a natural modeling choice. It produces a continuous, unimodal density
 with a single mode at the reported central value while retaining Gaussian
 falloff with the quoted scale on each side. This is an established probability
 distribution with a history extending back to Fechner's nineteenth-century
-work, rather than a package-specific construction. [1]_ [2]_ The Fechner
-distribution also continues to be used in contemporary metrology as one of
-several defensible models for asymmetric measurement uncertainty. [3]_
+work, rather than a package-specific construction. [1]_ [2]_ John (1982)
+gives a dedicated statistical treatment of the same three-parameter two-piece
+normal family, including maximum-likelihood and method-of-moments fitting. [6]_
+The Fechner distribution also continues to be used in contemporary metrology
+as one of several defensible models for asymmetric measurement uncertainty. [3]_
 
 Continuity is not a theorem that makes this model uniquely correct. It is a
 modeling constraint. The dimidiated model instead imposes equal probability on
@@ -426,3 +428,7 @@ References
        and Methods in Physics Research A* **1082**, 170857.
        `bibcode:2026NIMPA108270857B
        <https://scixplorer.org/abs/2026NIMPA108270857B/abstract>`_.
+
+.. [6] S. John (1982), *Communications in Statistics - Theory and Methods*
+       **11**\ (8), 879-885. `doi:10.1080/03610928208828279
+       <https://doi.org/10.1080/03610928208828279>`_.
