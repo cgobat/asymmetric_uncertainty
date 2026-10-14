@@ -14,6 +14,7 @@ Documentation
 -------------
 
 * :doc:`Getting started <getting_started>`
+* :doc:`Statistical model and interpretation <theory>`
 * :doc:`Special features <special_features>`
 * :doc:`API reference <api>`
 * :doc:`Links and resources <resources>`

@@ -35,7 +35,9 @@ and
 The same first-order convention is used for multiplication, division, powers,
 and the logarithmic/exponential helpers. Arithmetic therefore propagates the
 quoted local uncertainties; it does **not** claim to reproduce the convolution
-or nonlinear transformation of a probability density.
+or nonlinear transformation of a probability density. The statistical model
+associated with an ``a_u`` value, and the distinction between local uncertainty
+propagation and PDF propagation, are discussed in :doc:`theory`.
 
 The package recognizes the obvious fully correlated cases ``x + x``, ``x - x``,
 ``x * x``, ``x / x``, and ``x ** x`` when both operands are the same ``a_u``
@@ -47,36 +49,21 @@ Distribution utilities
 ----------------------
 
 For distributional calculations, ``value`` is interpreted as the mode and
-``minus`` and ``plus`` as the Gaussian widths of an associated jointly
-normalized split-normal distribution. This is a choice for the interpretation
-of the stored value and uncertainties rather than a propagation model used by
-ordinary arithmetic.
+``minus`` and ``plus`` as the Gaussian widths of an associated continuous
+split-normal distribution. The PDF, parameter interpretation, and differences
+from other asymmetric-Gaussian conventions are described in :doc:`theory`.
 
 The analytic :meth:`~asymmetric_uncertainty.a_u.cdf` is complemented by
 :meth:`~asymmetric_uncertainty.a_u.ppf`, which evaluates the inverse CDF, and
-:meth:`~asymmetric_uncertainty.a_u.rvs`, which draws random values from that
-associated split-normal distribution. Sampling uses the unequal probability
-mass on either side of the mode, so the fraction of samples below ``value`` is
-``minus / (minus + plus)`` rather than one half for an asymmetric value.
+:meth:`~asymmetric_uncertainty.a_u.rvs`, which draws random values from the
+associated distribution. ``rvs`` accepts either a seed or a
+:class:`numpy.random.Generator` through its ``rng`` argument.
 
-``rvs`` accepts either a seed or a :class:`numpy.random.Generator` through its
-``rng`` argument, allowing reproducible simulations without introducing a
-SciPy dependency.
-
-:meth:`~asymmetric_uncertainty.a_u.interval` returns intervals centered on the
-mode and scaled independently by the lower and upper Gaussian widths. The
-interval can be specified either by a number of sigma or by the corresponding
-contained probability. For example, ``interval(n_sigma=1)`` contains the same
-:math:`\operatorname{erf}(1/\sqrt{2})` probability as a one-sigma Gaussian
-interval, even when the two widths differ.
-
-This is distinct from an equal-tail credible interval. Use
-:meth:`~asymmetric_uncertainty.a_u.equal_tail_interval` when the probability
-excluded below the lower bound should equal the probability excluded above the
-upper bound. With no confidence specified, it uses the same
-:math:`\operatorname{erf}(1/\sqrt{2})` probability as a one-sigma Gaussian
-interval. For an asymmetric distribution, an equal-tail interval is not in
-general centered on ``value``.
+:meth:`~asymmetric_uncertainty.a_u.interval` returns mode-centered intervals
+scaled by the lower and upper Gaussian widths, while
+:meth:`~asymmetric_uncertainty.a_u.equal_tail_interval` returns quantile-based
+equal-tail intervals. These coincide for symmetric uncertainties but generally
+differ for an asymmetric distribution.
 
 Monte Carlo propagation
 -----------------------
