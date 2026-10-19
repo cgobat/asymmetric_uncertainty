@@ -2,4 +2,4 @@
 * text=auto
 
 # Jupyter notebooks are examples/analysis, not representative of package source.
-*.ipynb linguist-detectable=false
+*.ipynb linguist-documentation
