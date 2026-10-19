@@ -1,14 +1,18 @@
 Links and resources
 ===================
 
-Additional documentation
-------------------------
+Further documentation
+---------------------
+
+The :doc:`statistical model and interpretation <theory>` page describes the
+underlying probability model and the distinction between arithmetic and PDF
+propagation. The following pages provide additional context and references:
 
 .. toctree::
    :maxdepth: 1
 
-   supporting_material
    related_software
+   supporting_material
    limits
 
 External resources

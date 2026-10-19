@@ -1,5 +1,11 @@
-Supporting material and further reading
-=======================================
+Further reading and applications
+================================
+
+The :doc:`statistical model and interpretation <theory>` page defines the
+split-normal distribution used by the package and explains its assumptions.
+This page collects the literature behind that choice, broader approaches to
+asymmetric uncertainties, and examples of the package's use. For comparisons
+with other implementations, see :doc:`related_software`.
 
 * The probability distribution used by this package to model asymmetrically
   uncertain quantities is given by `Eq. (2) <https://iopscience.iop.org/article/10.1086/521975/fulltext/71979.text.html#sc5.1>`_

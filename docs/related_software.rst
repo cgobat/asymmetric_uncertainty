@@ -3,19 +3,15 @@ Related software
 
 Several packages address asymmetric uncertainties, but the notation
 :math:`x_{-\sigma_-}^{+\sigma_+}` does not by itself specify a unique
-statistical model. The quoted bounds may represent widths of an assumed
-probability distribution, confidence or credible intervals, or intervals
-inferred from a likelihood function. Packages that accept superficially similar
-inputs therefore need not be statistically interchangeable.
+statistical model or even a particular meaning for the quoted bounds. The
+comparison below deals with both **representation** (an assumed distribution,
+likelihood specification, error interval, etc.) and **propagation** (local
+derivatives, moment-matching, Monte Carlo sampling, etc.) differences. See
+:doc:`theory` for the statistical distinctions and :doc:`supporting_material`
+for (some of) the relevant literature.
 
-``asymmetric_uncertainty`` is primarily a numeric type with potentially
-separate upper and lower uncertainties. Arithmetic preserves ordinary
-nominal-value semantics and propagates the two uncertainty sides with
-first-order derivatives and quadrature. Distribution utilities additionally
-provide a split-normal interpretation in which ``value`` is the mode and
-``minus`` and ``plus`` are the Gaussian widths on the two sides. The packages
-below cover related use cases with different statistical models and/or
-propagation strategies.
+Comparison
+----------
 
 .. list-table::
    :header-rows: 1
