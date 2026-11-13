@@ -78,6 +78,8 @@ class a_u:
     def __init__(self, nominal, pos_err=0, neg_err=0):
         if isinstance(nominal, str):
             stripped = nominal.replace(" ", "")
+            if "+/-" in stripped:
+                stripped = stripped.replace("+/-", "±")
             if "±" in stripped:
                 self.value = float(stripped.split("±")[0])
                 self.plus = self.minus = float(nominal.split("±")[1])
