@@ -385,6 +385,8 @@ class a_u:
         Possible ``method``s are ``quadrature``, ``straight``, or ``split``. If
         ``inplace`` is ``True``, the existing object's errors are modified in
         place. If it is ``False`` (default), a new instance is returned.
+        The adjusted quantity starts a new independent uncertainty source;
+        correlations with earlier quantities are discarded.
         """
         if method == "quadrature":
             new_pos = np.hypot(self.plus, delta)
@@ -417,7 +419,7 @@ class a_u:
 
     def __neg__(self):
         """Return the additive inverse, swapping the positive and negative uncertainties."""
-        return a_u(-self.value, self.minus, self.plus)
+        return _propagated_result(-self.value, (self,), (-1,))
 
     def __add__(self, other):
         """Add another value with first-order asymmetric uncertainty propagation."""
@@ -426,8 +428,7 @@ class a_u:
         if not isinstance(other, type(self)):
             other = a_u(other, 0, 0)
         result = self.value + other.value
-        pos, neg = _propagated_errors((self, other), (1, 1))
-        return a_u(result, pos, neg)
+        return _propagated_result(result, (self, other), (1, 1))
 
     def __radd__(self, other):
         return self + other
@@ -439,8 +440,7 @@ class a_u:
         if not isinstance(other, type(self)):
             other = a_u(other, 0, 0)
         result = self.value - other.value
-        pos, neg = _propagated_errors((self, other), (1, -1))
-        return a_u(result, pos, neg)
+        return _propagated_result(result, (self, other), (1, -1))
 
     def __rsub__(self, other):
         if not isinstance(other, type(self)):
@@ -457,8 +457,7 @@ class a_u:
             other = a_u(other, 0, 0)
 
         result = self.value * other.value
-        pos, neg = _propagated_errors((self, other), (other.value, self.value))
-        return a_u(result, pos, neg)
+        return _propagated_result(result, (self, other), (other.value, self.value))
 
     def __rmul__(self, other):
         return self * other
@@ -474,11 +473,10 @@ class a_u:
         else:
             other = a_u(other, 0, 0)
         result = self.value / other.value
-        pos, neg = _propagated_errors(
-            (self, other),
+        return _propagated_result(
+            result, (self, other),
             (1 / other.value, -self.value / other.value**2)
         )
-        return a_u(result, pos, neg)
 
     def __rtruediv__(self, other):  # something divided by self
         if isinstance(other, type(self)):
@@ -486,11 +484,10 @@ class a_u:
         else:
             other = a_u(other, 0, 0)
         result = other.value / self.value
-        pos, neg = _propagated_errors(
-            (other, self),
+        return _propagated_result(
+            result, (other, self),
             (1 / self.value, -other.value / self.value**2)
         )
-        return a_u(result, pos, neg)
 
     def __pow__(self, other):  # self to the something power
         """Raise this value to a power with first-order asymmetric uncertainty propagation."""
@@ -514,8 +511,7 @@ class a_u:
         if exponent is self and exponent_is_uncertain:
             result = self.value**self.value
             derivative = result * (np.log(self.value) + 1)
-            pos, neg = _propagated_errors((self,), (derivative,))
-            return a_u(result, pos, neg)
+            return _propagated_result(result, (self,), (derivative,))
 
         result = self.value**exponent.value
 
@@ -532,11 +528,10 @@ class a_u:
         else:
             exponent_derivative = 0.0
 
-        pos, neg = _propagated_errors(
-            (self, exponent),
+        return _propagated_result(
+            result, (self, exponent),
             (base_derivative, exponent_derivative),
         )
-        return a_u(result, pos, neg)
 
     def __rpow__(self, other):  # something to the self power
         if isinstance(other, type(self)):
@@ -548,16 +543,12 @@ class a_u:
     def log10(self):
         """Return the base-10 logarithm with first-order propagated uncertainties."""
         result = np.log10(self.value)
-        pos = self.plus / (self.value * np.log(10))
-        neg = self.minus / (self.value * np.log(10))
-        return a_u(result, pos, neg)
+        return _propagated_result(result, (self,), (1 / (self.value * np.log(10)),))
 
     def log(self):
         """Return the natural logarithm with first-order propagated uncertainties."""
         result = np.log(self.value)
-        pos = self.plus / self.value
-        neg = self.minus / self.value
-        return a_u(result, pos, neg)
+        return _propagated_result(result, (self,), (1 / self.value,))
 
     def exp(self):
         """Return the exponential with first-order propagated uncertainties."""
