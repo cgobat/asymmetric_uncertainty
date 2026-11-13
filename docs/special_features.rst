@@ -11,10 +11,11 @@ Propagation model
 An ``a_u`` object is primarily a nominal numeric value with separate positive
 and negative uncertainties. Arithmetic applies the ordinary operation to the
 nominal values, so, for example, values of 2 and 3 always add to a value of 5.
-Distinct operands are treated as independent when their uncertainty
-contributions are combined in quadrature to first order. The sign of each local
-derivative determines which side of an operand contributes to the positive and
-negative uncertainty of the result.
+Separately constructed quantities start as independent uncertainty sources.
+Arithmetic retains signed derivatives with respect to these sources, combines
+contributions from each shared source, and then combines independent sources in
+quadrature to first order. The sign of each combined derivative determines
+which side of a source operand contributes to each side of the result.
 
 For independent operands this gives, for example,
 
