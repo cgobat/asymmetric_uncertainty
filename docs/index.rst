@@ -60,8 +60,8 @@ or symmetric form:
 
    x = a_u("3.0 +/- 0.3")
 
-The symmetric string form accepted by the package uses the Unicode plus-minus
-symbol (``±``); for example, ``a_u("3.0 ± 0.3")``.
+In the case of symmetric errors, the Unicode plus-minus symbol (``±``) is also
+accepted; for example, ``a_u("3.0 ± 0.3")``.
 
 Arithmetic applies the ordinary operation to the nominal values and propagates
 the positive and negative uncertainties locally with first-order derivatives
