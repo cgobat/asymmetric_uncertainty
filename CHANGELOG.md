@@ -2,6 +2,17 @@
 
 Notable changes to `asymmetric_uncertainty` are documented here.
 
+## Unreleased
+
+[Compare 0.6.0...HEAD](https://github.com/cgobat/asymmetric_uncertainty/compare/0.6.0...HEAD)
+
+### Added
+
+- Retain signed sensitivities to shared independent sources through arithmetic
+  and math helpers, recognizing correlations between derived quantities without
+  adding public correlation parameters. Public field assignments and
+  `add_error()` start new independent sources.
+
 ## 0.6.0 - 2026-11-20
 
 [Compare 0.5.1...0.6.0](https://github.com/cgobat/asymmetric_uncertainty/compare/0.5.1...0.6.0)
