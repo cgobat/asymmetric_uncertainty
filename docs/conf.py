@@ -28,26 +28,19 @@ root_doc = "index"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_favicon = "assets/favicon.png"
-html_theme = "pydata_sphinx_theme"
+html_theme = "alabaster"
 html_theme_options = {
-    "navbar_start": ["navbar-logo"],
-    "navbar_center": [],
-    "navbar_end": [
-        "theme-switcher",
-        "navbar-icon-links",
-    ],
-    "navbar_persistent": [
-        "search-button",
-    ],
-    "navbar_align": "right",
-    "github_url": "https://github.com/cgobat/asymmetric_uncertainty",
-    "show_prev_next": False,
-    "show_nav_level": 2,
+    "github_user": "cgobat",
+    "github_repo": "asymmetric_uncertainty",
+    "github_button": True,
+    "github_type": "star",
+    "page_width": "72rem",
 }
 html_sidebars = {
-    "index": [],
     "**": [
-        "sidebar-collapse",
-        "sidebar-nav-bs",
+        "about.html",
+        "navigation.html",
+        "relations.html",
+        "searchfield.html",
     ],
 }
