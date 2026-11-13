@@ -34,7 +34,7 @@ html_theme_options = {
     "github_repo": "asymmetric_uncertainty",
     "github_button": True,
     "github_type": "star",
-    "page_width": "90%",
+    "page_width": "80%",
 }
 html_sidebars = {
     "**": [
