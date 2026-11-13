@@ -72,6 +72,7 @@ See the :doc:`api` for the complete public interface and
 .. toctree::
    :hidden:
 
+   Home <self>
    theory
    special_features
    api
