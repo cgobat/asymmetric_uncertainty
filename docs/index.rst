@@ -5,6 +5,9 @@ Asymmetric Uncertainty
 numeric quantities with asymmetric uncertainties. Its primary interface is the
 :class:`asymmetric_uncertainty.a_u` class.
 
+Getting Started
+~~~~~~~~~~~~~~~
+
 Installation
 ------------
 
@@ -83,5 +86,5 @@ Documentation
 
 * :doc:`Statistical model and interpretation <theory>`
 * :doc:`Special features <special_features>`
-* :doc:`API reference <api>`
 * :doc:`Links and resources <resources>`
+* :doc:`API reference <api>`
