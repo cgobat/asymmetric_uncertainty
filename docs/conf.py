@@ -33,6 +33,7 @@ html_theme_options = {
     "github_user": "cgobat",
     "github_repo": "asymmetric_uncertainty",
     "github_button": True,
+    "github_type": "star",
 }
 html_sidebars = {
     "**": [
