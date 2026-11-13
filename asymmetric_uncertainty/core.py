@@ -14,6 +14,7 @@ distributed with this program for more details.
 import warnings
 from math import erf
 from statistics import NormalDist
+from uuid import uuid4
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,20 +27,27 @@ _SPLIT_NORMAL_VARIANCE_FACTOR = 3 / 4 - 2 / np.pi
 _SPLIT_NORMAL_THIRD_MOMENT_FACTOR = 6 / np.pi - 2
 
 
-def _propagated_errors(operands, derivatives) -> tuple[float, float]:
-    """Return first-order asymmetric errors for the supplied partial derivatives."""
+def _propagated_result(value, operands, derivatives):
+    """Combine signed sensitivities by source before asymmetric quadrature."""
+    sources = {}
+    for operand, derivative in zip(operands, derivatives):
+        for source, (sensitivity, plus, minus) in operand._sources.items():
+            previous = sources.get(source, (0.0, plus, minus))[0]
+            sources[source] = (previous + derivative * sensitivity, plus, minus)
+    sources = {source: term for source, term in sources.items() if term[0] != 0}
+
     pos_terms = []
     neg_terms = []
-    for operand, derivative in zip(operands, derivatives):
+    for derivative, plus, minus in sources.values():
         if derivative >= 0:
-            pos_error = operand.plus
-            neg_error = operand.minus
+            pos_error, neg_error = plus, minus
         else:
-            pos_error = operand.minus
-            neg_error = operand.plus
+            pos_error, neg_error = minus, plus
         pos_terms.append((derivative * pos_error)**2)
         neg_terms.append((derivative * neg_error)**2)
-    return np.sqrt(np.sum(pos_terms)), np.sqrt(np.sum(neg_terms))
+    result = a_u(value, np.sqrt(np.sum(pos_terms)), np.sqrt(np.sum(neg_terms)))
+    result._sources = sources
+    return result
 
 
 class a_u:
@@ -47,9 +55,9 @@ class a_u:
     Class for representing and propagating numeric values with asymmetric
     uncertainties. Arithmetic operates on the nominal values and propagates the
     positive and negative uncertainties independently using first-order
-    derivatives and quadrature. Reuse of the same object is recognized for
-    simple self-addition, subtraction, multiplication, division, and
-    exponentiation.
+    derivatives and quadrature. Arithmetic results retain signed derivatives
+    with respect to their independent uncertainty sources, so shared sources
+    are recognized in subsequent operations.
 
     Distribution utilities interpret the nominal value as the mode and the
     positive and negative uncertainties as the two Gaussian widths of an
@@ -94,6 +102,20 @@ class a_u:
             self.value = float(nominal)
             self.plus = abs(float(pos_err))
             self.minus = abs(float(neg_err))
+
+        self._reset_sources()
+
+    def _reset_sources(self):
+        """Start an independent source from the current public state."""
+        self._sources = (
+            {uuid4(): (1.0, self.plus, self.minus)}
+            if self.plus != 0 or self.minus != 0 else {}
+        )
+
+    def __setattr__(self, name, value):
+        object.__setattr__(self, name, value)
+        if name in ("value", "plus", "minus") and "_sources" in self.__dict__:
+            self._reset_sources()
 
     @property
     def maximum(self) -> float:
