@@ -40,7 +40,7 @@ Otherwise, clone/download this repository, then (from a command line running wit
 
 ## Documentation
 
-The documentation for this package is hosted on [ReadTheDocs](https://asymmetric-uncertainty.readthedocs.io/en/latest/). Supplemental information, such as related works, the mathematical basis of this implementation, and further background reading, can be found in the [supporting materials](./docs/supporting_material.rst) document.
+The documentation for this package is hosted on [ReadTheDocs](https://asymmetric-uncertainty.readthedocs.io/en/latest/). See the [theory page](./docs/theory.rst) for a review of the mathematical/statistical basis and literature, and [related software](./docs/related_software.rst) for comparisons with other packages that deal with similar topics.
 
 ## [Citing this project](./CITATION.bib)
 
