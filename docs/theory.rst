@@ -21,6 +21,10 @@ This page defines that statistical interpretation, contrasts it with other
 common asymmetric-Gaussian conventions, and states the assumptions under which
 the model is intended to be used.
 
+.. contents:: On this page
+   :local:
+   :depth: 1
+
 The associated split-normal distribution
 ----------------------------------------
 
@@ -163,7 +167,7 @@ An alternative: the dimidiated Gaussian
 ---------------------------------------
 
 A different convention is common in the asymmetric-error literature associated
-with Barlow and in software descended from that approach. [4]_ [5]_ Starting
+with Barlow and in software descended from that approach. [4]_ [5]_ [8]_ Starting
 from a standard-normal variate and applying one scale to negative deviations
 and another to positive deviations gives the *dimidiated* (or bifurcated)
 Gaussian
@@ -202,10 +206,10 @@ of the PDF are
    = \frac{1}{\sqrt{2\pi}\sigma_+}.
 
 Unless :math:`\sigma_-=\sigma_+`, the PDF is therefore discontinuous at the
-central value. Barlow, Brazzale, and Volobouev explicitly note this
+central value. Barlow, Brazzale, and Volobouev (2026) [5]_ explicitly note this
 characteristic of the dimidiated model and also emphasize that such
-three-parameter forms are models rather than uniquely ``correct``
-reconstructions of an unknown distribution. [5]_
+three-parameter forms are models rather than uniquely "correct" reconstructions
+of an unknown distribution.
 
 The two conventions can be summarized as follows:
 
@@ -252,18 +256,20 @@ height is a natural modeling choice. It produces a continuous, unimodal density
 with a single mode at the reported central value while retaining Gaussian
 falloff with the quoted scale on each side. This is an established probability
 distribution with a history extending back to Fechner's nineteenth-century
-work, rather than a package-specific construction. [1]_ [2]_ John (1982)
+work, [1]_ [2]_ rather than a package-specific construction. John (1982) [6]_
 gives a dedicated statistical treatment of the same three-parameter two-piece
-normal family, including maximum-likelihood and method-of-moments fitting. [6]_
+normal family, including maximum-likelihood and method-of-moments fitting.
 The Fechner distribution also continues to be used in contemporary metrology
 as one of several defensible models for asymmetric measurement uncertainty. [3]_
+Starling et al. (2008) [7]_ used this same distribution (their Eq. 2) in an
+astrophysical application, which partly inspired this package.
 
 Continuity is not a theorem that makes this model uniquely correct. It is a
 modeling constraint. The dimidiated model instead imposes equal probability on
 the two sides and accepts a discontinuity at the center. Other three-parameter
-models preserve still other quantities. Barlow, Brazzale, and Volobouev survey
-several such alternatives and explicitly note that no chosen form can be
-guaranteed to be the true underlying distribution. [5]_
+models preserve still other quantities. Barlow, Brazzale, and Volobouev (2026)
+[5]_ survey several such alternatives and explicitly note that no chosen form
+can be guaranteed to be the true underlying distribution.
 
 No three-parameter asymmetric model is closed under propagation
 ---------------------------------------------------------------
@@ -432,3 +438,11 @@ References
 .. [6] S. John (1982), *Communications in Statistics - Theory and Methods*
        **11**\ (8), 879-885. `doi:10.1080/03610928208828279
        <https://doi.org/10.1080/03610928208828279>`_.
+
+.. [7] R. L. C. Starling et al. (2008), *ApJ* **672**\ (1), 433.
+       `bibcode:2008ApJ...672..433S
+       <https://scixplorer.org/abs/2008ApJ...672..433S/abstract>`_.
+
+.. [8] R. Barlow (2004), *Asymmetric Statistical Errors*,
+       arXiv:physics/0406120. `bibcode:2004physics...6120B
+       <https://scixplorer.org/abs/2004physics...6120B/abstract>`_.

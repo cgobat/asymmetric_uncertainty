@@ -6,9 +6,8 @@ Several packages address asymmetric uncertainties, but the notation
 statistical model or even a particular meaning for the quoted bounds. The
 comparison below deals with both **representation** (an assumed distribution,
 likelihood specification, error interval, etc.) and **propagation** (local
-derivatives, moment-matching, Monte Carlo sampling, etc.) differences. See
-:doc:`theory` for the statistical distinctions and :doc:`supporting_material`
-for (some of) the relevant literature.
+derivatives, moment-matching, Monte Carlo sampling, etc.) differences. For the
+statistical distinctions underlying these approaches, see :doc:`theory`.
 
 Comparison
 ----------
