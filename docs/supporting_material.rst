@@ -27,9 +27,19 @@ with other implementations, see :doc:`related_software`.
   discussion of the mathematical theory surrounding various interpretations of
   such quantities.
 
-* This package was originally developed for and subsequently used in
-  `cgobat/dark-GRBs <https://github.com/cgobat/dark-GRBs>`_ [5]_ and
-  `cgobat/XDBS <https://github.com/cgobat/XDBS>`_. [6]_
+Applications of this package
+----------------------------
+
+``asymmetric_uncertainty`` was originally developed for and subsequently used
+in the following projects:
+
+* `cgobat/dark-GRBs <https://github.com/cgobat/dark-GRBs>`_ [5]_
+* `cgobat/XDBS <https://github.com/cgobat/XDBS>`_ [6]_
+
+A (probably non-exhaustive) list of other works that have used this software
+can be retrieved from SciX/ADS:
+
+* https://scixplorer.org/abs/2022ascl.soft08005G/citations
 
 .. rubric:: References
 
