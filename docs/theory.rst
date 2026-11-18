@@ -264,12 +264,12 @@ as one of several defensible models for asymmetric measurement uncertainty. [3]_
 Starling et al. (2008) [7]_ used this same distribution (their Eq. 2) in an
 astrophysical application, which partly inspired this package.
 
-Continuity is not a theorem that makes this model uniquely correct. It is a
-modeling constraint. The dimidiated model instead imposes equal probability on
-the two sides and accepts a discontinuity at the center. Other three-parameter
-models preserve still other quantities. Barlow, Brazzale, and Volobouev (2026)
-[5]_ survey several such alternatives and explicitly note that no chosen form
-can be guaranteed to be the true underlying distribution.
+Continuity does not necessarily make this model uniquely correct. The
+dimidiated model instead imposes equal probability on the two sides and accepts
+a discontinuity at the center. Other three-parameter models preserve still
+other quantities. Barlow, Brazzale, and Volobouev (2026) [5]_ survey several
+such alternatives and explicitly note that no chosen form can be guaranteed to
+be the true underlying distribution.
 
 No three-parameter asymmetric model is closed under propagation
 ---------------------------------------------------------------
