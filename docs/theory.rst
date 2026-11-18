@@ -420,24 +420,22 @@ References
 .. [1] G. T. Fechner (1897), *Kollektivmasslehre*, edited by G. F. Lipps,
        Leipzig: Wilhelm Engelmann.
 
-.. [2] K. F. Wallis (2014), *Statistical Science* **29**\ (1), 106.
+.. [2] K. F. Wallis (2014), *Statist. Sci.* **29**\ (1), 106.
        `bibcode:2014arXiv1405.4995W <https://scixplorer.org/abs/2014arXiv1405.4995W/abstract>`_.
 
 .. [3] A. Possolo, C. Merkatas, and O. Bodnar (2019), *Metrologia* **56**\ (4),
        045009. `bibcode:2019Metro..56d5009P
        <https://scixplorer.org/abs/2019Metro..56d5009P/abstract>`_.
 
-.. [4] R. Barlow (2003), arXiv:physics/0306138. `bibcode:2003physics...6138B
-       <https://scixplorer.org/abs/2003physics...6138B/abstract>`_.
+.. [4] R. Barlow (2003), *Asymmetric Systematic Errors*, arXiv:physics/0306138.
+       `bibcode:2003physics...6138B <https://scixplorer.org/abs/2003physics...6138B/abstract>`_.
 
-.. [5] R. Barlow, A. R. Brazzale, and I. Volobouev (2026), *Nuclear Instruments
-       and Methods in Physics Research A* **1082**, 170857.
-       `bibcode:2026NIMPA108270857B
+.. [5] R. Barlow, A. R. Brazzale, and I. Volobouev (2026), *Nucl. Instrum.
+       Methods Phys. Res. A* **1082**, 170857. `bibcode:2026NIMPA108270857B
        <https://scixplorer.org/abs/2026NIMPA108270857B/abstract>`_.
 
-.. [6] S. John (1982), *Communications in Statistics - Theory and Methods*
-       **11**\ (8), 879-885. `doi:10.1080/03610928208828279
-       <https://doi.org/10.1080/03610928208828279>`_.
+.. [6] S. John (1982), *Commun. Stat. Theory Methods* **11**\ (8), 879-885.
+       `doi:10.1080/03610928208828279 <https://doi.org/10.1080/03610928208828279>`_.
 
 .. [7] R. L. C. Starling et al. (2008), *ApJ* **672**\ (1), 433.
        `bibcode:2008ApJ...672..433S
