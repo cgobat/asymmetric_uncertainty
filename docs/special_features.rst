@@ -167,7 +167,7 @@ Upper and lower limits
 The ``a_u`` class has no dedicated statistical model for handling upper or
 lower limits. The table below shows several possible ways to encode a limit as
 a nominal value with asymmetric errors. There are tradeoffs to each and none
-are necessarily prescribed or uniquely correct or representations.
+are uniquely correct representations.
 
 .. list-table::
    :header-rows: 1
