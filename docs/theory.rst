@@ -155,13 +155,13 @@ Terminology
 -----------
 
 Names for asymmetric Gaussian constructions are not used consistently across
-the literature or software. ``split normal``, ``two-piece normal``,
-``bifurcated Gaussian``, and ``double Gaussian`` have all been used for related
-but not always identical constructions. [2]_ This documentation uses
-*split normal* and *two-piece normal* specifically for the continuous Fechner
-form defined above, and *dimidiated Gaussian* for the equal-area construction
-defined below. The formula and parameter interpretation are therefore more
-important than the name alone.
+the literature or software. "split normal", "two-piece normal", "bifurcated
+Gaussian", and "double Gaussian" have all been used for related but not always
+identical constructions. [2]_ This documentation uses *split normal* and
+*two-piece normal* specifically in reference to the continuous Fechner form
+defined above, and *dimidiated Gaussian* for the equal-area construction
+discussed in the following section. The actual formula and parameter
+interpretation are therefore more important than the name alone.
 
 An alternative: the dimidiated Gaussian
 ---------------------------------------
