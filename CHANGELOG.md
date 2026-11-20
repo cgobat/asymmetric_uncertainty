@@ -11,6 +11,10 @@ Notable changes to `asymmetric_uncertainty` are documented here.
 - Added the `a_u.fit()` class method for fitting a continuous split-normal distribution to sample data using maximum-likelihood estimation. The returned object represents the fitted mode and positive/negative Gaussian widths.
 - Added an optional `fit=True` argument to `propagate()` to automatically fit a split-normal distribution to the Monte Carlo output and return an `a_u` object. The default behavior (`fit=False`) continues to return the raw samples.
 
+### Fixed
+
+- Fixed parsing of symmetric uncertainties using ASCII `"+/-"` notation in the `a_u` string constructor.
+
 ### Documentation
 
 - Reorganized/consolidated docs into a flatter structure, reducing redundancy and making things easier to find.
