@@ -6,7 +6,10 @@ Notable changes to `asymmetric_uncertainty` are documented here.
 
 [Compare 0.5.1...HEAD](https://github.com/cgobat/asymmetric_uncertainty/compare/0.5.1...HEAD)
 
-### Changed
+### Added
+
+- Added the `a_u.fit()` class method for fitting a continuous split-normal distribution to sample data using maximum-likelihood estimation. The returned object represents the fitted mode and positive/negative Gaussian widths.
+- Added an optional `fit=True` argument to `propagate()` to automatically fit a split-normal distribution to the Monte Carlo output and return an `a_u` object. The default behavior (`fit=False`) continues to return the raw samples.
 
 ### Documentation
 
