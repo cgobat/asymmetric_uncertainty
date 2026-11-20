@@ -235,6 +235,31 @@ class TestCore(unittest.TestCase):
         np.testing.assert_array_equal(exact.rvs(size=3, rng=123), np.full(3, 2.0))
         self.assertEqual(exact.rvs(rng=123), 2.0)
 
+    def test_Fitting(self):
+
+        original = a_u(3.0, 0.2, 0.4)
+        observations = original.rvs(size=30000, rng=12345)
+        fitted = a_u.fit(observations)
+        self.assertIsInstance(fitted, a_u)
+        self.assertAlmostEqual(fitted.value, original.value, delta=0.03)
+        self.assertAlmostEqual(fitted.plus, original.plus, delta=0.03)
+        self.assertAlmostEqual(fitted.minus, original.minus, delta=0.03)
+
+        reconstructed = fitted.rvs(size=30000, rng=54321)
+        np.testing.assert_allclose(
+            np.quantile(reconstructed, [0.1, 0.5, 0.9]),
+            np.quantile(observations, [0.1, 0.5, 0.9]),
+            atol=0.03,
+            rtol=0,
+        )
+
+        exact = a_u.fit([2.5, 2.5, 2.5])
+        self.assertEqual(exact.items(), (2.5, 0.0, 0.0))
+
+        for invalid in ([], [1], [[1, 2], [3, 4]], [1, np.nan], [1, np.inf]):
+            with self.subTest(samples=invalid), self.assertRaises(ValueError):
+                a_u.fit(invalid)
+
     def test_Intervals(self):
 
         self.assertEqual(self.testValue.interval(), (2.6, 3.2))
@@ -352,8 +377,18 @@ class TestCore(unittest.TestCase):
         np.testing.assert_array_equal(samples, repeated)
         self.assertEqual(samples.shape, (5000,))
 
+        raw = propagate(lambda x: x**2, value, size=5000, rng=12345, fit=False)
+        np.testing.assert_array_equal(samples, raw)
+        fitted = propagate(lambda x: x**2, value, size=5000, rng=12345, fit=True)
+        self.assertIsInstance(fitted, a_u)
+        np.testing.assert_allclose(fitted.items(), a_u.fit(samples).items())
+
         shared = propagate(lambda x, y: x - y, value, value, size=1000, rng=12345)
         np.testing.assert_array_equal(shared, np.zeros(1000))
+        fitted_shared = propagate(
+            lambda x, y: x - y, value, value, size=1000, rng=12345, fit=True
+        )
+        self.assertEqual(fitted_shared.items(), (0.0, 0.0, 0.0))
 
         independent = propagate(
             lambda x, y: x - y,
@@ -366,6 +401,8 @@ class TestCore(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             propagate(lambda x: x, value, size=0)
+        with self.assertRaises(ValueError):
+            propagate(lambda x: np.stack([x, x]), value, size=100, fit=True)
 
     def test_Subtraction(self):
 
