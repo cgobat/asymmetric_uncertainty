@@ -64,12 +64,16 @@ split-normal distribution from a one-dimensional sample by maximum likelihood,
 returning an ``a_u`` with the fitted mode and Gaussian widths. This is a
 parametric approximation to the sample distribution; the returned uncertainties
 are widths of that distribution, not errors on the fitted parameters.
+For unit-bearing input samples, the fitted result retains the input unit.
 
 :meth:`~asymmetric_uncertainty.a_u.interval` returns mode-centered intervals
 scaled by the lower and upper Gaussian widths, while
 :meth:`~asymmetric_uncertainty.a_u.equal_tail_interval` returns quantile-based
 equal-tail intervals. These coincide for symmetric uncertainties but generally
-differ for an asymmetric distribution.
+differ for an asymmetric distribution. For unit-bearing objects, ``rvs()``,
+``ppf()``, and both interval methods return Astropy quantities. The ``mean``
+and ``std`` properties also carry the object's unit, and ``variance`` carries
+its square. ``skewness`` and ``kurtosis`` remain dimensionless.
 
 Monte Carlo propagation
 -----------------------
@@ -97,6 +101,9 @@ This fit approximates the output PDF and can change the nominal value as well
 as the uncertainties. It may poorly represent distributions that are not
 approximately split-normal. For multi-step calculations, propagate the complete
 expression and fit only the final result to retain intermediate correlations.
+When the operands have physical units, the samples retain those units and
+``fit=True`` returns a unit-bearing result. The callable must support Astropy
+``Quantity`` inputs for unit-bearing operands.
 
 Each distinct ``a_u`` object is sampled once per call. Passing the same object
 multiple times therefore reuses the same sample realization and preserves

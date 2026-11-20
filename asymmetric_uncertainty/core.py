@@ -196,16 +196,24 @@ class a_u:
         return self.minus*self.unit
 
     def to(self, target, equivalencies=None):
-        """Return a copy converted to `target` units."""
+        """Return a copy converted to `target` units.
+
+        For nonlinear equivalencies, transform the interval endpoints and
+        approximate the result with new asymmetric widths. The resulting PDF
+        need not remain split-normal.
+        """
         if not _has_astropy():
             raise ImportError("Astropy is required for unit conversion.")
         if equivalencies is None:
             equivalencies = []
         target = u.Unit(target)
         value = self.quantity.to_value(target, equivalencies=equivalencies)
-        plus = self.plus_quantity.to_value(target, equivalencies=equivalencies)
-        minus = self.minus_quantity.to_value(target, equivalencies=equivalencies)
-        return a_u(value, plus, minus, unit=target)
+        lower = (self.value - self.minus)*self.unit
+        upper = (self.value + self.plus)*self.unit
+        lower = lower.to_value(target, equivalencies=equivalencies)
+        upper = upper.to_value(target, equivalencies=equivalencies)
+        return a_u(value, max(lower, upper) - value,
+                   value - min(lower, upper), unit=target)
 
     def to_value(self, target=None, equivalencies=None):
         """Return the nominal value, optionally converted to `target` units."""
@@ -244,7 +252,8 @@ class a_u:
     @property
     def mean(self) -> float:
         """Mean of the associated split-normal distribution."""
-        return self.value + _SPLIT_NORMAL_MEAN_FACTOR * (self.plus - self.minus)
+        mean = self.value + _SPLIT_NORMAL_MEAN_FACTOR * (self.plus - self.minus)
+        return mean if _unit_is_dimensionless(self.unit) else mean*self.unit
 
     @property
     def median(self) -> float:
@@ -256,7 +265,8 @@ class a_u:
         """Variance of the associated split-normal distribution."""
         width_sum = self.plus + self.minus
         width_diff = self.plus - self.minus
-        return (width_sum**2) / 4 + _SPLIT_NORMAL_VARIANCE_FACTOR * width_diff**2
+        variance = (width_sum**2) / 4 + _SPLIT_NORMAL_VARIANCE_FACTOR * width_diff**2
+        return variance if _unit_is_dimensionless(self.unit) else variance*self.unit**2
 
     @property
     def std(self) -> float:
@@ -267,16 +277,21 @@ class a_u:
     def _third_central_moment(self) -> float:
         """Third central moment of the associated split-normal distribution."""
         width_diff = self.plus - self.minus
+        variance = self.variance
+        if _is_quantity(variance):
+            variance = variance.to_value(self.unit**2)
         return (
             _SPLIT_NORMAL_MEAN_FACTOR
             * width_diff
-            * (self.variance + _SPLIT_NORMAL_THIRD_MOMENT_FACTOR * width_diff**2)
+            * (variance + _SPLIT_NORMAL_THIRD_MOMENT_FACTOR * width_diff**2)
         )
 
     @property
     def skewness(self) -> float:
         """Standardized third central moment of the associated split-normal distribution."""
         variance = self.variance
+        if _is_quantity(variance):
+            variance = variance.to_value(self.unit**2)
         if variance == 0:
             return np.nan
         return self._third_central_moment / variance**1.5
@@ -285,11 +300,16 @@ class a_u:
     def kurtosis(self) -> float:
         """Fisher (excess) kurtosis of the associated split-normal distribution."""
         variance = self.variance
+        if _is_quantity(variance):
+            variance = variance.to_value(self.unit**2)
         if variance == 0:
             return np.nan
 
         width_sum = self.plus + self.minus
-        mean_shift = self.mean - self.value
+        mean = self.mean
+        if _is_quantity(mean):
+            mean = mean.to_value(self.unit)
+        mean_shift = mean - self.value
         second_about_mode = (self.minus**3 + self.plus**3) / width_sum
         third_about_mode = (
             2 * _SPLIT_NORMAL_MEAN_FACTOR * (self.plus**4 - self.minus**4) / width_sum
@@ -313,7 +333,10 @@ class a_u:
         return "%s (+%s, -%s)%s" % (*(format(x, fmt_spec) for x in self.items()), unit_suffix)
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.value!r}, {self.plus!r}, {self.minus!r})"
+        params = f"{self.value!r}, {self.plus!r}, {self.minus!r}"
+        if not _unit_is_dimensionless(self.unit):
+            params += f", unit={self.unit.to_string()!r}"
+        return f"{type(self).__name__}({params})"
 
     def _repr_latex_(self, float_fmt="f"):
         if self.is_symmetric:
@@ -348,9 +371,16 @@ class a_u:
         """Evaluate the associated split-normal cumulative distribution function."""
         x_arr = self._x_values(x)
         width_sum = self.plus + self.minus
+        lower_cdf = (
+            0.0 if self.minus == 0
+            else lambda values: self.minus/width_sum * (1 + np_erf((values-self.value)/(self.minus*np.sqrt(2))))
+        )
+        upper_cdf = (
+            1.0 if self.plus == 0
+            else lambda values: (self.minus + self.plus*np_erf((values-self.value)/(self.plus*np.sqrt(2))))/width_sum
+        )
         cdf_arr = np.piecewise(x_arr, [x_arr<self.value, x_arr>=self.value],
-                               [lambda values: self.minus/width_sum * (1 + np_erf((values-self.value)/(self.minus*np.sqrt(2)))),
-                                lambda values: (self.minus + self.plus*np_erf((values-self.value)/(self.plus*np.sqrt(2))))/width_sum])
+                               [lower_cdf, upper_cdf])
         return cdf_arr.item() if x_arr.ndim == 0 else cdf_arr
 
     def ppf(self, q):
@@ -364,7 +394,8 @@ class a_u:
         width_sum = self.plus + self.minus
         if width_sum == 0:
             result[finite] = self.value
-            return result.item() if np.isscalar(q) else result
+            values = result.item() if np.isscalar(q) else result
+            return values if _unit_is_dimensionless(self.unit) else values*self.unit
 
         lower_endpoint = finite & (q_arr == 0)
         upper_endpoint = finite & (q_arr == 1)
@@ -383,7 +414,8 @@ class a_u:
             tail_probability = (1 - q_arr[upper]) * width_sum / (2 * self.plus)
             result[upper] = self.value - self.plus * np_ppf(tail_probability)
 
-        return result.item() if np.isscalar(q) else result
+        values = result.item() if np.isscalar(q) else result
+        return values if _unit_is_dimensionless(self.unit) else values*self.unit
 
     def rvs(self, size=None, rng=None):
         """Draw random values from the associated split-normal distribution."""
@@ -394,9 +426,8 @@ class a_u:
 
         width_sum = self.plus + self.minus
         if width_sum == 0:
-            if size is None:
-                return self.value
-            return np.full(size, self.value, dtype=float)
+            samples = self.value if size is None else np.full(size, self.value, dtype=float)
+            return samples if _unit_is_dimensionless(self.unit) else samples*self.unit
 
         negative_side = generator.random(size=size) < self.minus / width_sum
         magnitude = np.abs(generator.standard_normal(size=size))
@@ -405,7 +436,8 @@ class a_u:
             self.value - self.minus * magnitude,
             self.value + self.plus * magnitude,
         )
-        return samples.item() if size is None else samples
+        samples = samples.item() if size is None else samples
+        return samples if _unit_is_dimensionless(self.unit) else samples*self.unit
 
     @classmethod
     def fit(cls, samples):
@@ -413,8 +445,9 @@ class a_u:
 
         Parameters
         ----------
-        samples : array-like, shape (n,)
-            At least two finite observations from the distribution.
+        samples : array-like or astropy.units.Quantity, shape (n,)
+            At least two finite observations from the distribution. Quantity
+            samples retain their physical unit in the fitted result.
 
         Returns
         -------
@@ -431,7 +464,9 @@ class a_u:
         For small or strongly one-sided samples, one fitted width may also be
         zero.
         """
-        data = np.asarray(samples, dtype=float)
+        unit = samples.unit if _is_quantity(samples) else None
+        data = np.asarray(samples.to_value(unit) if unit is not None else samples,
+                          dtype=float)
         if data.ndim != 1 or data.size < 2:
             raise ValueError("samples must be a 1-D array with at least two points")
         if not np.all(np.isfinite(data)):
@@ -441,7 +476,7 @@ class a_u:
         residuals = data - center
         scale = float(np.max(np.abs(residuals)))
         if scale == 0:
-            return cls(center, 0, 0)
+            return cls(center, 0, 0, unit=unit)
         scaled = residuals / scale
         count = scaled.size
 
@@ -483,7 +518,7 @@ class a_u:
         lower = np.cbrt(np.sum(np.square(offsets[offsets < 0])))
         upper = np.cbrt(np.sum(np.square(offsets[offsets >= 0])))
         factor = scale * np.sqrt((lower + upper) / count)
-        return cls(center + scale * mode, upper * factor, lower * factor)
+        return cls(center + scale * mode, upper * factor, lower * factor, unit=unit)
 
     def interval(self, n_sigma=None, confidence=None):
         """Return a mode-centered interval in units of the two Gaussian widths."""
@@ -502,10 +537,11 @@ class a_u:
         if not np.isfinite(n_sigma) or n_sigma < 0:
             raise ValueError("n_sigma must be a finite non-negative number")
 
-        return (
-            self.value - n_sigma * self.minus,
-            self.value + n_sigma * self.plus,
-        )
+        lower = self.value - n_sigma * self.minus
+        upper = self.value + n_sigma * self.plus
+        if not _unit_is_dimensionless(self.unit):
+            return lower*self.unit, upper*self.unit
+        return lower, upper
 
     def equal_tail_interval(self, confidence=None):
         """Return an equal-tail interval containing the requested probability mass.
@@ -641,6 +677,8 @@ class a_u:
 
     def __add__(self, other):
         """Add another value with first-order asymmetric uncertainty propagation."""
+        if other is self:
+            return self * 2
         if _has_astropy() and isinstance(other, Number):
             result_quantity = self.quantity + other
             pos = self.plus_quantity.to_value(result_quantity.unit)
@@ -660,6 +698,8 @@ class a_u:
 
     def __sub__(self, other):
         """Subtract another value with first-order asymmetric uncertainty propagation."""
+        if other is self:
+            return a_u(0, unit=self.unit)
         if _has_astropy() and isinstance(other, Number):
             result_quantity = self.quantity - other
             pos = self.plus_quantity.to_value(result_quantity.unit)
@@ -688,6 +728,8 @@ class a_u:
 
     def __mul__(self, other):
         """Multiply by another value with first-order asymmetric uncertainty propagation."""
+        if other is self:
+            return self**2
         if _is_unit(other):
             return a_u(self.value, self.plus, self.minus, unit=self.unit*other)
 
@@ -714,6 +756,10 @@ class a_u:
 
     def __truediv__(self, other):  # self divided by something
         """Divide by another value with first-order asymmetric uncertainty propagation."""
+        if other is self:
+            if self.value == 0 and self.plus == 0 and self.minus == 0:
+                raise ZeroDivisionError("division by zero")
+            return a_u(1)
         if _is_unit(other):
             return a_u(self.value, self.plus, self.minus, unit=self.unit/other)
 
@@ -776,6 +822,15 @@ class a_u:
         if exponent_is_uncertain and not _unit_is_dimensionless(self.unit):
             raise ValueError("uncertain exponents require a dimensionless base")
 
+        if other is self and exponent_is_uncertain:
+            result = self.value**self.value
+            derivative = result * (np.log(self.value) + 1)
+            pos, neg = _propagated_errors(
+                (self,), (derivative,),
+                result_unit=u.dimensionless_unscaled if _has_astropy() else None,
+            )
+            return a_u(result, pos, neg)
+
         if _has_astropy():
             result_quantity = self.quantity**exponent.value
             if self.value == 0:
@@ -797,12 +852,6 @@ class a_u:
                 result_unit=result_quantity.unit,
             )
             return a_u(result_quantity.value, pos, neg, unit=result_quantity.unit)
-
-        if exponent is self and exponent_is_uncertain:
-            result = self.value**self.value
-            derivative = result * (np.log(self.value) + 1)
-            pos, neg = _propagated_errors((self,), (derivative,))
-            return a_u(result, pos, neg)
 
         result = self.value**exponent.value
 
