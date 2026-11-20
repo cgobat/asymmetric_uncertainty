@@ -2,6 +2,19 @@
 
 Notable changes to `asymmetric_uncertainty` are documented here.
 
+## Unreleased
+
+[Compare 0.5.1...HEAD](https://github.com/cgobat/asymmetric_uncertainty/compare/0.5.1...HEAD)
+
+### Changed
+
+### Documentation
+
+- Reorganized/consolidated docs into a flatter structure, reducing redundancy and making things easier to find.
+- Standardized journal abbreviations, improved wording and formatting, and updated README documentation links.
+- Updated the BibTeX citation entry to use `@software` instead of `@misc`.
+- Added the previously omitted changelog entry for version 0.5.1.
+
 ## 0.5.1 - 2026-11-13
 
 [Compare 0.5.0...0.5.1](https://github.com/cgobat/asymmetric_uncertainty/compare/0.5.0...0.5.1)
