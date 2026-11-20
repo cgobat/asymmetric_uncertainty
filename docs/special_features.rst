@@ -59,6 +59,12 @@ The analytic :meth:`~asymmetric_uncertainty.a_u.cdf` is complemented by
 associated distribution. ``rvs`` accepts either a seed or a
 :class:`numpy.random.Generator` through its ``rng`` argument.
 
+The :meth:`~asymmetric_uncertainty.a_u.fit` class method estimates the same
+split-normal distribution from a one-dimensional sample by maximum likelihood,
+returning an ``a_u`` with the fitted mode and Gaussian widths. This is a
+parametric approximation to the sample distribution; the returned uncertainties
+are widths of that distribution, not errors on the fitted parameters.
+
 :meth:`~asymmetric_uncertainty.a_u.interval` returns mode-centered intervals
 scaled by the lower and upper Gaussian widths, while
 :meth:`~asymmetric_uncertainty.a_u.equal_tail_interval` returns quantile-based
