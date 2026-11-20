@@ -377,8 +377,18 @@ class TestCore(unittest.TestCase):
         np.testing.assert_array_equal(samples, repeated)
         self.assertEqual(samples.shape, (5000,))
 
+        raw = propagate(lambda x: x**2, value, size=5000, rng=12345, fit=False)
+        np.testing.assert_array_equal(samples, raw)
+        fitted = propagate(lambda x: x**2, value, size=5000, rng=12345, fit=True)
+        self.assertIsInstance(fitted, a_u)
+        np.testing.assert_allclose(fitted.items(), a_u.fit(samples).items())
+
         shared = propagate(lambda x, y: x - y, value, value, size=1000, rng=12345)
         np.testing.assert_array_equal(shared, np.zeros(1000))
+        fitted_shared = propagate(
+            lambda x, y: x - y, value, value, size=1000, rng=12345, fit=True
+        )
+        self.assertEqual(fitted_shared.items(), (0.0, 0.0, 0.0))
 
         independent = propagate(
             lambda x, y: x - y,
@@ -391,6 +401,8 @@ class TestCore(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             propagate(lambda x: x, value, size=0)
+        with self.assertRaises(ValueError):
+            propagate(lambda x: np.stack([x, x]), value, size=100, fit=True)
 
     def test_Subtraction(self):
 

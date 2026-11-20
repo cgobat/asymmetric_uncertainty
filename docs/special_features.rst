@@ -84,11 +84,19 @@ distribution and evaluates a supplied callable on those arrays. For example:
 
    samples = propagate(lambda x, y: x / y, A, B, size=10000, rng=42)
 
-The raw return value from the callable is returned directly; ``propagate`` does
-not fit the Monte Carlo result back to an ``a_u`` object. This makes the
-function useful for diagnostics and direct comparison with the package's
-first-order arithmetic without imposing another approximation on the sampled
-output.
+By default, ``propagate`` returns the callable's output directly, preserving
+the Monte Carlo samples for analysis without imposing a parametric model. Set
+``fit=True`` to instead return an ``a_u`` obtained by fitting a split-normal
+distribution to a one-dimensional sample:
+
+.. code-block:: python
+
+   result = propagate(lambda x, y: x + y, A, B, size=10000, rng=42, fit=True)
+
+This fit approximates the output PDF and can change the nominal value as well
+as the uncertainties. It may poorly represent distributions that are not
+approximately split-normal. For multi-step calculations, propagate the complete
+expression and fit only the final result to retain intermediate correlations.
 
 Each distinct ``a_u`` object is sampled once per call. Passing the same object
 multiple times therefore reuses the same sample realization and preserves

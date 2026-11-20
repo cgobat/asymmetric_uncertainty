@@ -689,7 +689,7 @@ class a_u:
         return not self.isna()
 
 
-def propagate(function, *args, size=10000, rng=None):
+def propagate(function, *args, size=10000, rng=None, fit=False):
     """Evaluate a callable on split-normal samples drawn from ``a_u`` arguments.
 
     Each distinct ``a_u`` object is sampled once, so passing the same object
@@ -708,12 +708,16 @@ def propagate(function, *args, size=10000, rng=None):
         Number of Monte Carlo samples to draw. Default is 10000.
     rng : numpy.random.Generator or int or None, optional
         Random generator or seed passed to the split-normal sampler.
+    fit : bool, optional
+        If True, fit an ``a_u`` split-normal distribution to the output samples.
+        Default is False, returning the callable's output unchanged.
 
     Returns
     -------
-    object : array-like
-        The return value from ``function``. No split-normal approximation is
-        fitted to the Monte Carlo result.
+    object : array-like or a_u
+        The callable's output when ``fit=False``, or an ``a_u`` fitted to its
+        one-dimensional, finite output sample when ``fit=True``. Fitting is a
+        parametric approximation and may change the nominal value.
     """
     if isinstance(size, bool) or not isinstance(size, (int, np.integer)) or size <= 0:
         raise ValueError("size must be a positive integer")
@@ -734,7 +738,10 @@ def propagate(function, *args, size=10000, rng=None):
         else:
             sampled_args.append(arg)
 
-    return function(*sampled_args)
+    result = function(*sampled_args)
+    if fit:
+        return a_u.fit(result)
+    return result
 
 
 class AsymmetricUncertainty(a_u):  # alias for legacy namespace support
