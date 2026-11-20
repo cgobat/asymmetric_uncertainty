@@ -287,6 +287,84 @@ class a_u:
         )
         return samples.item() if size is None else samples
 
+    @classmethod
+    def fit(cls, samples):
+        """Fit the split-normal distribution to a sample by maximum likelihood.
+
+        Parameters
+        ----------
+        samples : array-like, shape (n,)
+            At least two finite observations from the distribution.
+
+        Returns
+        -------
+        a_u
+            A fitted distribution whose ``value`` is the mode and whose
+            ``plus`` and ``minus`` are its upper and lower Gaussian widths.
+
+        Notes
+        -----
+        The fitted widths describe the sample distribution, not the statistical
+        uncertainty on the estimated mode. The fit assumes independent samples
+        of the continuous split-normal distribution used by :meth:`pdf` and
+        :meth:`rvs`. Identical samples give an exact value with zero widths.
+        For small or strongly one-sided samples, one fitted width may also be
+        zero.
+        """
+        data = np.asarray(samples, dtype=float)
+        if data.ndim != 1 or data.size < 2:
+            raise ValueError("samples must be a 1-D array with at least two points")
+        if not np.all(np.isfinite(data)):
+            raise ValueError("samples must contain only finite values")
+
+        center = float(np.median(data))
+        residuals = data - center
+        scale = float(np.max(np.abs(residuals)))
+        if scale == 0:
+            return cls(center, 0, 0)
+        scaled = residuals / scale
+        count = scaled.size
+
+        # Profile out the two widths: for a fixed mode, the MLE widths are
+        # proportional to the cube roots of the sums of squared deviations
+        # on their respective sides. The remaining objective is 1D.
+        def profile(mode):
+            offsets = scaled - mode
+            lower = np.sum(np.square(offsets[offsets < 0]))
+            upper = np.sum(np.square(offsets[offsets >= 0]))
+            return np.cbrt(lower) + np.cbrt(upper)
+
+        grid = np.unique(np.quantile(scaled, np.linspace(0, 1, 33)))
+        scores = np.array([profile(value) for value in grid])
+        index = int(np.argmin(scores))
+        left = grid[max(0, index - 1)]
+        right = grid[min(grid.size - 1, index + 1)]
+
+        # Refine the best grid point with a bounded golden-section search.
+        ratio = (np.sqrt(5) - 1) / 2
+        a = right - ratio * (right - left)
+        b = left + ratio * (right - left)
+        fa, fb = profile(a), profile(b)
+        for _ in range(64):
+            if fa <= fb:
+                right, b, fb = b, a, fa
+                a = right - ratio * (right - left)
+                fa = profile(a)
+            else:
+                left, a, fa = a, b, fb
+                b = left + ratio * (right - left)
+                fb = profile(b)
+
+        mode = (left + right) / 2
+        if scores[index] <= profile(mode):
+            mode = grid[index]
+
+        offsets = scaled - mode
+        lower = np.cbrt(np.sum(np.square(offsets[offsets < 0])))
+        upper = np.cbrt(np.sum(np.square(offsets[offsets >= 0])))
+        factor = scale * np.sqrt((lower + upper) / count)
+        return cls(center + scale * mode, upper * factor, lower * factor)
+
     def interval(self, n_sigma=None, confidence=None):
         """Return a mode-centered interval in units of the two Gaussian widths."""
         if n_sigma is not None and confidence is not None:
