@@ -2,6 +2,24 @@
 
 Notable changes to `asymmetric_uncertainty` are documented here.
 
+## 0.5.1 - 2026-11-13
+
+[Compare 0.5.0...0.5.1](https://github.com/cgobat/asymmetric_uncertainty/compare/0.5.0...0.5.1)
+
+### Changed
+
+- Added type annotations throughout the package and formally established Python 3.9 as the minimum supported version.
+- Updated CI to test Python 3.9, 3.11, and 3.13, using Ubuntu 24.04 for Python 3.9 compatibility.
+
+### Documentation
+
+- Added a comprehensive discussion of the statistical interpretation of asymmetric uncertainties, including the continuous split-normal distribution, alternative conventions, and limitations of uncertainty propagation.
+- Expanded references to the relevant statistical literature and comparisons with related software.
+- Reorganized the documentation to place installation and basic usage instructions directly on the homepage.
+- Switched the documentation theme from PyData Sphinx to Alabaster.
+- Added the documentation URL to the project metadata.
+- Added a changelog documenting the project's release history.
+
 ## 0.5.0 - 2026-10-13
 
 [Compare 0.4.1...0.5.0](https://github.com/cgobat/asymmetric_uncertainty/compare/0.4.1...0.5.0)
