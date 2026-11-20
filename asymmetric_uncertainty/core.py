@@ -82,7 +82,7 @@ class a_u:
                 stripped = stripped.replace("+/-", "±")
             if "±" in stripped:
                 self.value = float(stripped.split("±")[0])
-                self.plus = self.minus = float(nominal.split("±")[1])
+                self.plus = self.minus = float(stripped.split("±")[1])
             elif "+" in stripped and "-" in stripped:
                 self.value = float(stripped.split("(")[0])
                 err_str = stripped.split("(")[1].replace(")", "")
