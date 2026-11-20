@@ -2,9 +2,9 @@
 
 Notable changes to `asymmetric_uncertainty` are documented here.
 
-## Unreleased
+## 0.6.0 - 2026-11-20
 
-[Compare 0.5.1...HEAD](https://github.com/cgobat/asymmetric_uncertainty/compare/0.5.1...HEAD)
+[Compare 0.5.1...0.6.0](https://github.com/cgobat/asymmetric_uncertainty/compare/0.5.1...0.6.0)
 
 ### Added
 
