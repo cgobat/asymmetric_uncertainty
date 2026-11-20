@@ -235,6 +235,31 @@ class TestCore(unittest.TestCase):
         np.testing.assert_array_equal(exact.rvs(size=3, rng=123), np.full(3, 2.0))
         self.assertEqual(exact.rvs(rng=123), 2.0)
 
+    def test_Fitting(self):
+
+        original = a_u(3.0, 0.2, 0.4)
+        observations = original.rvs(size=30000, rng=12345)
+        fitted = a_u.fit(observations)
+        self.assertIsInstance(fitted, a_u)
+        self.assertAlmostEqual(fitted.value, original.value, delta=0.03)
+        self.assertAlmostEqual(fitted.plus, original.plus, delta=0.03)
+        self.assertAlmostEqual(fitted.minus, original.minus, delta=0.03)
+
+        reconstructed = fitted.rvs(size=30000, rng=54321)
+        np.testing.assert_allclose(
+            np.quantile(reconstructed, [0.1, 0.5, 0.9]),
+            np.quantile(observations, [0.1, 0.5, 0.9]),
+            atol=0.03,
+            rtol=0,
+        )
+
+        exact = a_u.fit([2.5, 2.5, 2.5])
+        self.assertEqual(exact.items(), (2.5, 0.0, 0.0))
+
+        for invalid in ([], [1], [[1, 2], [3, 4]], [1, np.nan], [1, np.inf]):
+            with self.subTest(samples=invalid), self.assertRaises(ValueError):
+                a_u.fit(invalid)
+
     def test_Intervals(self):
 
         self.assertEqual(self.testValue.interval(), (2.6, 3.2))
